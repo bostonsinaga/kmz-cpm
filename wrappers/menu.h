@@ -98,7 +98,7 @@ public:
 
 private:
 	std::string getErrorString(bool isUseDMSErrorMessage);
-  std::string getKMLTOWNEnvVarDir();
+  std::string getGeotonFullPath();
   bool testReadmeFile(std::ifstream *readFile_ptr, std::string testDirStr);
 
   std::vector<std::string> *inputStrings_ptr = nullptr;

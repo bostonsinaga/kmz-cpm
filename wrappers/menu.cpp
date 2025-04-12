@@ -487,80 +487,66 @@ std::string Menu::getErrorString(bool isUseDMSErrorMessage) {
   return retStr_stream.str();
 }
 
-// from 'README.md' (tested on Windows)
-std::string Menu::getKMLTOWNEnvVarDir() {
+std::string Menu::getGeotonFullPath() {
 
-  const char* env_p = std::getenv("PATH");
+  const char *env = std::getenv("PATH");
+  std::string dirname = "geoton/build";
 
-  // 'std::strlen' from 'cstring' library
-  int env_p_ct = std::strlen(env_p);
+#ifdef _WIN32
+  dirname = "geoton\\build";
+#endif
 
-  int listenCtr = 0;
+  const int envct = std::strlen(env),
+    dirnamect = dirname.size();
 
-  bool isFound = false,
-    isContainsBackslash = false; // eg. C:\KML-TOWN\bin (using backslash)
+  if (envct < dirnamect) return "";
 
-  std::string
-    expectedStr = "KML-TOWN",
-    retStr = "";
+  int i, match = 0;
+  std::string path;
 
-  for (int i = 0; i < env_p_ct; i++) {
+  // firstly search only the first 'dirname' character
+  for (i = 0; i < envct - envct % dirnamect; i++) {
 
-    if (!isContainsBackslash) {
-      if (env_p[i] == '\\') {
-        isContainsBackslash = true;
+    if (env[i] == dirname[0]) {
+      match++;
+
+      // then match to all remaining 'dirname' characters
+      for (int j = 1; j < dirnamect; j++) {
+        if (env[i + j] == dirname[j]) {
+          match++;
+        }
+        else break;
       }
-    }
 
-    if (i < env_p_ct - 1 &&
-      env_p[i] == expectedStr[listenCtr] &&
-      env_p[i + 1] == expectedStr[listenCtr + 1]
-    ) {
-      listenCtr++;
-
-      if (listenCtr == expectedStr.length() - 1) {
-        isFound = true;
-
-        // 'listenCtr' at the end of "KML-TOWN" part in 'env_p'
-        listenCtr = i + 1;
-
-        break;
-      }
-    }
-    else listenCtr = 0;
-  }
-
-  if (isFound) {
-    for (int i = listenCtr; i >= 0; i--) {
-
-      if (env_p[i] == ';') {
-        listenCtr = i + 1;
-        break;
-      }
-      else if (i == 0) listenCtr = 0;
-    }
-
-    for (int i = listenCtr; i < env_p_ct; i++) {
-      if (env_p[i] == ';') break;
-      retStr += env_p[i];
+      if (match == dirnamect) break;
+      match = 0;
     }
   }
 
-  std::string fileName = "README.md";
+  // left
+  for (int j = i; j >= 0; j--) {
 
-  if (isContainsBackslash) {
-    fileName = "\\" + fileName;
+    if (env[j] != ';') path += env[j];
+    else break;
   }
-  else fileName = "/" + fileName;
 
-  return retStr + fileName;
+  std::reverse(path.begin(), path.end());
+
+  // right
+  for (int j = i + 1; j < envct; j++) {
+
+    if (env[j] != ';') path += env[j];
+    else break;
+  }
+
+  return path;
 }
 
 /** Main Menu (Help) */
 void Menu::displayAvailableCommands() {
 
   std::ifstream readFile;
-  if (!testReadmeFile(&readFile, getKMLTOWNEnvVarDir())) return;
+  if (!testReadmeFile(&readFile, getGeotonFullPath())) return;
 
   std::string text, stringBuffer;
   bool isDetected = false;
@@ -624,7 +610,7 @@ void Menu::displayAvailableCommands() {
   // display main menu
   std::cout
     << "******************\n"
-    << "**   KML-TOWN   **\n"
+    << "**    GEOTON    **\n"
     << "** command list **\n"
     << "******************\n"
     << "\n"
@@ -637,7 +623,7 @@ void Menu::displayAvailableCommands() {
 void Menu::displayVersionNumber() {
 
   std::ifstream readFile;
-  if (!testReadmeFile(&readFile, getKMLTOWNEnvVarDir())) return;
+  if (!testReadmeFile(&readFile, getGeotonFullPath())) return;
 
   std::string text;
 
@@ -667,43 +653,19 @@ bool Menu::testReadmeFile(
   std::ifstream *readFile_ptr,
   std::string testDirStr
 ) {
-  *readFile_ptr = std::ifstream(testDirStr);
+  *readFile_ptr = std::ifstream(testDirStr + "\\README.md");
 
-  // file found
+  // same directory
   if (readFile_ptr->is_open()) {
     return true;
   }
-  // file not found (check)
+  // directory 1 level above
   else {
-    /**
-     * Using debug readme file inside main folder 
-     * 'bin/platform/../../README.md'.
-     */
-    size_t foundDex = testDirStr.find("/README.md");
-    std::string slashStr = "../../";
-
-    if (foundDex == std::string::npos) {
-      foundDex = testDirStr.find("\\README.md");
-      slashStr = "..\\..\\";
-    }
-
-    // 'Environment Variables -> PATH' is debug directory
-    if (foundDex != std::string::npos) {
-
-      testDirStr = (
-        testDirStr.substr(0, foundDex + 1) +
-        slashStr +
-        testDirStr.substr(foundDex + 1)
-      );
-
-      *readFile_ptr = std::ifstream(testDirStr);
-
-      // file found
-      if (readFile_ptr->is_open()) return true;
-    }
+    *readFile_ptr = std::ifstream(testDirStr + "\\..\\README.md");
+    if (readFile_ptr->is_open()) return true;
   }
 
-  /** File not found (end) */
+  // file not found
   std::cout
     << getRedError() << " Cannot display command list because 'README.md' file is not found.\n"
     << "Please make sure that the file is inside '..\\KML-TOWN\\bin\\'\n"
