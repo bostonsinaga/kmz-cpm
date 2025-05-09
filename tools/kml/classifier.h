@@ -4,19 +4,19 @@
 #include "placemark.h"
 
 namespace kml {
-
-class Classifier {
+  
+  class Classifier {
     public:
-        Classifier() {}
-        
-        void rearrange(
-            xml::Node *kmlNode,
-            bool isCleanFolders,
-            bool isIncludeFolders
-        );
-
-        bool filterString(xml::Node *kmlNode, std::string searchStr);
-};
+    Classifier() {}
+    
+    void rearrange(
+      xml::Node *kmlNode,
+      bool isCleanFolders,
+      bool isIncludeFolders
+    );
+    
+    bool filterString(xml::Node *kmlNode, std::string searchStr);
+  };
 }
 
 #endif // __CLASSIFIER_H__
