@@ -529,18 +529,17 @@ bool TwinsChecker::checkSimilarStyle(
     xml::Node *placemark_B,
     bool &isFirstPlcItr
 ) {
-    static StyleStrings kmlStyleStrings;
     std::string styleDataStr_A, styleDataStr_B;
 
     if (isFirstPlcItr) {
-        styleDataStr_A = kmlStyleStrings.getPlacemarkStyleData(placemark_A, true);
-        styleDataStr_B = kmlStyleStrings.getPlacemarkStyleData(placemark_B, false);
+        styleDataStr_A = StyleStrings::getPlacemarkStyleData(placemark_A, true);
+        styleDataStr_B = StyleStrings::getPlacemarkStyleData(placemark_B, false);
         isFirstPlcItr = false;
         return styleDataStr_A == styleDataStr_B;
     }
     else {
-        styleDataStr_A = kmlStyleStrings.getPlacemarkStyleData(placemark_A, false);
-        styleDataStr_B = kmlStyleStrings.getPlacemarkStyleData(placemark_B, false);
+        styleDataStr_A = StyleStrings::getPlacemarkStyleData(placemark_A, false);
+        styleDataStr_B = StyleStrings::getPlacemarkStyleData(placemark_B, false);
         return styleDataStr_A == styleDataStr_B;
     }
 }
@@ -631,8 +630,6 @@ bool TwinsChecker::tidyUpStyles(xml::Node *kmlNode) {
         */
 
         bool isFirstPlcItr = true;
-        StyleStrings kmlStyleStrings;
-        
         std::vector<std::string> styleUrlVec[2];
         std::vector<xml::Node*> placemarkNodesVec[2];
 
@@ -653,7 +650,7 @@ bool TwinsChecker::tidyUpStyles(xml::Node *kmlNode) {
                 placemarkNode = placemarkNode->getParent();
 
                 styleUrlVec[i].push_back(
-                    kmlStyleStrings.getPlacemarkStyleData(
+                    StyleStrings::getPlacemarkStyleData(
                         placemarkNode, isFirstPlcItr, &styleExistanceHook
                     )
                 );
