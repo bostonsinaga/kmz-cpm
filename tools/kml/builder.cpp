@@ -7,9 +7,10 @@ namespace kml {
 
 xml::Node *Builder::createFolder(
     std::string name,
-    bool isOpen
+    const std::string &defaultName,
+    const bool &isOpen
 ) {
-    if (name == "") name = "Folder";
+    if (name == "") name = defaultName;
 
     std::stringstream placemark_strStream;
     placemark_strStream
@@ -43,14 +44,14 @@ xml::Node *Builder::createPinStyleMap(
 
     // using default 'ylw-pushpin'
     if (pinIconNamed == "" ||
-        !styleStrings.isAnIconUrl(pinIconNamed)
+        !StyleStrings::isAnIconUrl(pinIconNamed)
     ) {
-        pinIconUrl = styleStrings.pinIconUrlArray[0];
+        pinIconUrl = StyleStrings::pinIconUrlArray[0];
         pinIconNamed = mini_tool::cutFileDirName(pinIconUrl);
     }
     // using custom
     else {
-        pinIconUrl = styleStrings.getPinIconNamedUrl(pinIconNamed);
+        pinIconUrl = StyleStrings::getPinIconNamedUrl(pinIconNamed);
     }
 
     // remove '.png' extension string
@@ -65,22 +66,22 @@ xml::Node *Builder::createPinStyleMap(
 
     if (styleMapId_hook) *styleMapId_hook = styleMapId;
 
-    pinIconTypeFlag = styleStrings.getPinTyleFlag(pinIconNamed);
+    pinIconTypeFlag = StyleStrings::getPinTyleFlag(pinIconNamed);
 
     switch (pinIconTypeFlag) {
-        case styleStrings.PUSHPIN_PIN_TYPE_FLAG: {
+        case StyleStrings::PUSHPIN_PIN_TYPE_FLAG: {
             normalScale = pushpinScaleNormal;
             highlightScale = pushpinScaleHighlight;
             hotspotPos[0] = pushpinHotspotPosVec.at(0);
             hotspotPos[1] = pushpinHotspotPosVec.at(1);
         break;}
-        case styleStrings.PADDLE_PIN_TYPE_FLAG: {
+        case StyleStrings::PADDLE_PIN_TYPE_FLAG: {
             normalScale = paddleScaleNormal;
             highlightScale = paddleScaleHighlight;
             hotspotPos[0] = paddleHotspotPosVec.at(0);
             hotspotPos[1] = paddleHotspotPosVec.at(1);
         break;}
-        case styleStrings.SHAPES_PIN_TYPE_FLAG: {
+        case StyleStrings::SHAPES_PIN_TYPE_FLAG: {
             normalScale = shapesScaleNormal;
             highlightScale = shapesScaleHighlight;
             hotspotPos[0] = shapesHotspotPosVec.at(0);
@@ -149,19 +150,19 @@ xml::Node *Builder::createPathStyleMap(
 
     if (pathColorNamed == "") {
         pathColorNamed = "white";
-        pathColorCode = styleStrings.getPathColorCode(pathColorNamed);
+        pathColorCode = StyleStrings::getPathColorCode(pathColorNamed);
         pathColorNamed += "-path";
     }
     else {
         for (int i = 0; i < StyleStrings::colorCodeArray_count; i++) {
             // 'pathColorNamed' as code
-            if (styleStrings.colorCodeArray[i] == pathColorNamed) {
+            if (StyleStrings::colorCodeArray[i] == pathColorNamed) {
                 pathColorCode = pathColorNamed;
                 break;
             }
             // 'pathColorNamed' as name or other
             else if (i == StyleStrings::colorCodeArray_count - 1) {
-                pathColorCode = styleStrings.getPathColorCode(pathColorNamed);
+                pathColorCode = StyleStrings::getPathColorCode(pathColorNamed);
                 pathColorNamed += "-path";
             }
         }
@@ -390,8 +391,6 @@ std::string Builder::getAltitudeAddition(
 
     return "";
 }
-
-StyleStrings Builder::styleStrings = StyleStrings();
 
 std::vector<std::string>
     Builder::pushpinHotspotPosVec = {"20", "2"},

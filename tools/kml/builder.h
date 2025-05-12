@@ -9,7 +9,8 @@ class Builder {
     public:
         static xml::Node *createFolder(
             std::string name = "",
-            bool isOpen = false
+            const std::string &defaultName = "Folder",
+            const bool &isOpen = false
         );
 
         // return one style map set of pins
@@ -56,8 +57,6 @@ class Builder {
             int altitudeAdditionFlag,
             std::string coorStrAuto = ""
         );
-
-        static StyleStrings styleStrings;
 
         static std::vector<std::string>
             pushpinHotspotPosVec,
