@@ -628,7 +628,7 @@ void Menu::displayVersionNumber() {
   std::string text;
 
   while (std::getline(readFile, text)) {
-    if (mini_tool::isStringContains(text, "# KML-TOWN v")) break;
+    if (mini_tool::isStringContains(text, "# geoton v")) break;
   }
 
   readFile.close();
