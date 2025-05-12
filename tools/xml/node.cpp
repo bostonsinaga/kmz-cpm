@@ -54,9 +54,6 @@ namespace xml {
     return retNode;
   }
 
-  std::vector<Node*> *Node::getChildren() {return &children;}
-  std::vector<Attribute> *Node::getAttributes() {return &attributes;}
-
   Node *Node::getFirstChildByName(
     std::string searchName,
     bool isPrintMessage
@@ -170,16 +167,6 @@ namespace xml {
     innerText = text_in;
   }
 
-  /** ATTRIBUTE */
-
-  void Node::setAttributes(std::vector<Attribute> attributes_in) {
-    attributes = attributes_in;
-  }
-
-  void Node::addAttribute(Attribute attribute_in) {
-    attributes.push_back(attribute_in);
-  }
-
   void Node::setParent(
     Node *parent_in,
     bool isParentAddChild,
@@ -229,12 +216,18 @@ namespace xml {
     newChild->setParent(this, false);
   }
 
-  void Node::addChildren(std::vector<Node*> newChildren) {
+  void Node::addChildren(const std::vector<Node*> &newChildren) {
+
     children.insert(
       children.end(),
       newChildren.begin(),
       newChildren.end()
     );
+
+    for (xml::Node* node : newChildren) {
+      if (node->parent) node->parent->removeChild(node);
+      node->parent = this;
+    }
   }
 
   std::vector<Node*> Node::replaceChildren(std::vector<Node*> newChildren) {
