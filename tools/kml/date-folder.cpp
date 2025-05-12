@@ -145,7 +145,7 @@ bool DateFolder::packNumeral(xml::Node *kmlNode) {
             }
 
             dateStrVec.push_back(dateStr);
-            newFolderNodes.push_back(Builder::createFolder(dateStr, false));
+            newFolderNodes.push_back(Builder::createFolder(dateStr));
             insideDex = dateStrVec.size() - 1;
             bufferItemsCount = 0;
         }
