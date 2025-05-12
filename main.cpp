@@ -491,7 +491,7 @@ int main(int argc, char *argv[]) {
       }
       
       if (isProceed && kmlNode) {
-        kml::Classifier().rearrange(kmlNode, cleanFolders_toggleBool, includeFolders_toggleBool);
+        kml::Classifier().groupStyles(kmlNode, cleanFolders_toggleBool, includeFolders_toggleBool);
         call_briefer::writeFileFunc(kmlNode, fileDir_check);
       }
       else if (
