@@ -1,5 +1,5 @@
 project(geoton)
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 4.0.1 )
 
 find_package( GeographicLib REQUIRED )
 include_directories( ${GeographicLib_INCLUDE_DIRS} )
