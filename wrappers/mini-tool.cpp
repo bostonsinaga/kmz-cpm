@@ -9,7 +9,7 @@ const std::string mini_tool::DEGREE_SIGN = std::string{
 };
 
 // acually remove the string in front of '/' with the sign itself
-std::string mini_tool::cutFileDirName(std::string &fileDir) {
+std::string mini_tool::cutFileDirName(const std::string &fileDir) {
   std::string cutName = fileDir;
 
   for (int i = 0; i < fileDir.size(); i++) {

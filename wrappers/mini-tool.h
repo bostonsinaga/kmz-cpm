@@ -47,7 +47,7 @@ public:
 
   static const std::string DEGREE_SIGN;
 
-  static std::string cutFileDirName(std::string &fileDir);
+  static std::string cutFileDirName(const std::string &fileDir);
   static bool isANumber(char ch);
   static bool isALetter(char ch);
   static std::string reverseString(std::string &str_in);
