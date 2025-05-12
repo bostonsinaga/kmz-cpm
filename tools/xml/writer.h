@@ -4,19 +4,19 @@
 #include "node.h"
 
 namespace xml {
-
-class Writer {
+  
+  class Writer {
     public:
-        static void stringify(
-            std::string fileDir_out,
-            Node *root,
-            bool isWithRoot = true
-        );
-
+    static void stringify(
+      std::string fileDir_out,
+      Node *root,
+      bool isWithRoot = true
+    );
+    
     private:
-        static std::string stringifyAttributes(std::vector<Attribute> *attributes);
-        static std::string pullChildrenStrings(std::vector<Node*> *children);
-};
+      static std::string stringifyAttributes(Attribute &attributes);
+      static std::string pullChildrenStrings(std::vector<Node*> *children);
+  };
 }
 
 #endif // __XML_WRITER_H__

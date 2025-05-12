@@ -40,11 +40,11 @@ void Writer::stringify(
     std::cout << "XML-> Stringify into '" + fileDir_out + "' completed!\n";
 }
 
-std::string Writer::stringifyAttributes(std::vector<Attribute> *attributes) {
+std::string Writer::stringifyAttributes(Attribute &attributes) {
     std::string retTxt = "";
 
-    for (auto &att : *attributes) {
-        retTxt += " " + att.getName() + "=\"" + att.getValue() + "\"";
+    for (auto &att : attributes) {
+        retTxt += " " + att.first + "=\"" + att.second + "\"";
     }
     
     return retTxt;
@@ -76,7 +76,7 @@ std::string Writer::pullChildrenStrings(std::vector<Node*> *children) {
         if (child->getGender() == MALE_XMLGEN) {
             retTxt += (
                 indentSpaces[0] + "<" + child->getName()
-                + stringifyAttributes(child->getAttributes()) + "/>\n"
+                + stringifyAttributes(child->attributes) + "/>\n"
             );
         }
         else { // FEMALE element
@@ -112,7 +112,7 @@ std::string Writer::pullChildrenStrings(std::vector<Node*> *children) {
 
             retTxt += (
                 indentSpaces[0] + "<" + child->getName()
-                    + stringifyAttributes(child->getAttributes()) + ">"
+                    + stringifyAttributes(child->attributes) + ">"
                         + pulledStrings
                 + indentSpaces[1] + "</" + child->getName() + ">\n"
             );

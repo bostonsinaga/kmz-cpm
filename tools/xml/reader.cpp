@@ -62,7 +62,7 @@ Node *Reader::parse(
 
     Node *retNode = nullptr;
     std::vector<Node*> queueNodes;
-    std::vector<Attribute> readAttributes;
+    Attribute readAttributes;
 
     int qnSz = queueNodes.size();
 
@@ -147,8 +147,7 @@ Node *Reader::parse(
 
                         // MALE with ATT
                         if (readAttributes.size() > 0) {
-                            node->setAttributes(readAttributes);
-                            readAttributes.clear();
+                            node->attributes = std::move(readAttributes);
                         }
 
                         readMarkName = "";
@@ -254,10 +253,7 @@ Node *Reader::parse(
                             readAttVal = readAttVal.substr(0, readAttVal.size() - 1);
                         }
 
-                        readAttributes.push_back(
-                            Attribute(readAttName, readAttVal)
-                        );
-
+                        readAttributes[readAttName] = readAttVal;
                         readAttName = "";
                         readAttVal = "";
                     }
@@ -280,8 +276,7 @@ Node *Reader::parse(
                         Node *node = new Node(readMarkName);
                         queueNodes.push_back(node);
                         qnSz = queueNodes.size();
-                        node->setAttributes(readAttributes);
-                        readAttributes.clear();
+                        node->attributes = std::move(readAttributes);
                         readMarkName = "";
                     }
 
