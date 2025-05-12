@@ -5,6 +5,94 @@
 
 namespace kml {
 
+  StyleStrings::StyleStrings(xml::Node *root) {
+    if (root) {
+      xml::Node
+        *iconStyleNode,
+        *iconNode,
+        *hrefNode,
+        *lineStyleNode,
+        *colorNode;
+
+      iconMaps.clear();
+      lineMaps.clear();
+      styleMaps.clear();
+      classification.clear();
+
+      if (!root->isRoot()) {
+        root = root->getRoot();
+      }
+
+      for (xml::Node *node : root->getDescendantsByName("Style")) {
+
+        iconStyleNode = node->getFirstChildByName("IconStyle");
+        lineStyleNode = node->getFirstChildByName("LineStyle");
+
+        if (iconStyleNode) {
+          iconNode = iconStyleNode->getFirstChildByName("Icon");
+
+          if (iconNode) {
+            hrefNode = iconNode->getFirstChildByName("href");
+
+            if (hrefNode) {
+              std::string hrefText = hrefNode->getInnerText();
+              size_t urlCutIndex = 0;
+
+              if (hrefText.find("https") != std::string::npos) {
+                urlCutIndex = 37;
+              }
+              else if (hrefText.find("http") != std::string::npos) {
+                urlCutIndex = 36;
+              }
+
+              iconMaps["#" + node->attributes["id"]] = std::string(
+                hrefText.begin() + urlCutIndex,
+                hrefText.end()
+              );
+            }
+          }
+        }
+
+        if (lineStyleNode) {
+          colorNode = lineStyleNode->getFirstChildByName("color");
+
+          if (colorNode) {
+            lineMaps["#" + node->attributes["id"]] = std::string(
+              colorNode->getInnerText()
+            );
+          }
+        }
+      }
+
+      for (xml::Node *node : root->getDescendantsByName("StyleMap")) {
+        styleMaps["#" + node->attributes["id"]]
+          = node->getFirstDescendantByName("styleUrl")->getInnerText();
+      }
+    }
+  }
+
+  void StyleStrings::classify(xml::Node *node, const bool &isIcon) {
+
+    xml::Node *styleUrl = node->getFirstChildByName("styleUrl");
+    std::string styleUrlText;
+
+    if (styleUrl) {
+      styleUrlText = styleUrl->getInnerText();
+    }
+
+    if (styleMaps.find(styleUrlText) != styleMaps.end()) {
+      classification[isIcon?
+        iconMaps[styleMaps[styleUrlText]] :
+        lineMaps[styleMaps[styleUrlText]]
+      ].push_back(node);
+    }
+  }
+}
+
+/** TEMPORARY */
+
+namespace kml {
+
   int StyleStrings::getPinIconNamedIndex(std::string &pinIconNamed) {
     for (int i = 0;
       i < sizeof(pinIconUrlArray) / sizeof(std::string);
@@ -58,7 +146,7 @@ namespace kml {
       testStr += ".png";
     }
 
-    for (int i = 0; i < pinIconUrlArray_count; i++) {
+    for (int i = 0; i < StyleStrings::pinIconUrlArray_count; i++) {
       if (mini_tool::cutFileDirName(pinIconUrlArray[i]) == testStr) {
         return true;
       }
@@ -147,10 +235,10 @@ namespace kml {
       std::string styleName = styleUrlNode->getInnerText();
       styleName = styleName.substr(1);
 
-      for (auto &styleMapNode : styleMapNodeVec) {
-        for (auto &att1 : *styleMapNode->getAttributes()) {
+      for (xml::Node *styleMapNode : styleMapNodeVec) {
+        for (auto &att1 : styleMapNode->attributes) {
 
-          if (att1.getName() == "id" && att1.getValue() == styleName) {
+          if (att1.first == "id" && att1.second == styleName) {
 
             /** Search only for normal style */
 
@@ -162,11 +250,11 @@ namespace kml {
 
             normalPairStyleName = normalPairStyleName.substr(1);
 
-            for (auto &styleNode : styleNodeVec) {
-              for (auto &att2 : *styleNode->getAttributes()) {
+            for (xml::Node *styleNode : styleNodeVec) {
+              for (auto &att2 : styleNode->attributes) {
 
-                if (att2.getName() == "id" &&
-                  att2.getValue() == normalPairStyleName
+                if (att2.first == "id" &&
+                  att2.second == normalPairStyleName
                 ) {
                   // pin
                   if (placemark->getFirstDescendantByName("Point")) {

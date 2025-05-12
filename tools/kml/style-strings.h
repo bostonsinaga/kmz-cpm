@@ -1,15 +1,26 @@
 #ifndef __KML_STYLE_STRINGS_H__
 #define __KML_STYLE_STRINGS_H__
 
+#include <unordered_map>
 #include "general.h"
 
 namespace kml {
 
   class StyleStrings {
-  public:
-    StyleStrings() {}
+  private:
+    std::unordered_map<std::string, std::string>
+      iconMaps, lineMaps, styleMaps;
 
-    static const int
+  public:
+    std::unordered_map<std::string, std::vector<xml::Node*>> classification;
+
+    StyleStrings() = delete;
+    StyleStrings(xml::Node *root);
+    void classify(xml::Node *node, const bool &isIcon);
+
+    /** TEMPORARY */
+
+    inline static const int
       pinIconUrlArray_count = 170,
       colorCodeArray_count = 12;
 
@@ -19,13 +30,13 @@ namespace kml {
       SHAPES_PIN_TYPE_FLAG
     };
 
-    std::string
+    inline static const std::string
       googleMapLink = "http://maps.google.com/mapfiles/kml/",
       mapLinkPushpin = googleMapLink + "pushpin/",
       mapLinkPaddle = googleMapLink + "paddle/",
       mapLinkShapes = googleMapLink + "shapes/";
 
-    std::string pinIconUrlArray[pinIconUrlArray_count] = {
+    inline static const std::string pinIconUrlArray[pinIconUrlArray_count] = {
 
       ///////////////
       // PUSH PINS //
@@ -213,7 +224,7 @@ namespace kml {
       mapLinkShapes + "webcam.png"
     };
 
-    std::string colorCodeArray[colorCodeArray_count] {
+    inline static const std::string colorCodeArray[colorCodeArray_count] {
       "ff0000ff",
       "ff00ffff",
       "ffff00ff",
@@ -228,23 +239,23 @@ namespace kml {
       "ff7f7f7f"
     };
 
-    /////////////
-    // METHODS //
-    /////////////
+    //_________|
+    // METHODS |
+    //_________|
 
-    int getPinIconNamedIndex(std::string &pinIconNamed);
-    std::string getPinIconNamedUrl(std::string pinIconNamed);
-    int getPinTyleFlag(std::string &pinIconNamed);
+    static int getPinIconNamedIndex(std::string &pinIconNamed);
+    static std::string getPinIconNamedUrl(std::string pinIconNamed);
+    static int getPinTyleFlag(std::string &pinIconNamed);
 
     // identifiers
-    bool isAnIconUrl(std::string testStr);
-    bool isAColorCode(std::string &testStr);
+    static bool isAnIconUrl(std::string testStr);
+    static bool isAColorCode(std::string &testStr);
 
     // path's color codes from name
-    std::string getPathColorCode(std::string pathColorNamed);
+    static std::string getPathColorCode(std::string pathColorNamed);
 
     // get style string data of pin 'href' or path 'color-code'
-    std::string getPlacemarkStyleData(
+    static std::string getPlacemarkStyleData(
       xml::Node *placemark,
       bool isRefreshStaticData,
       bool *styleExistanceHook = nullptr
