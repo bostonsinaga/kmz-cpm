@@ -9,12 +9,12 @@ namespace kml {
     public:
     Classifier() {}
     
-    void rearrange(
+    void groupStyles(
       xml::Node *kmlNode,
       bool isCleanFolders,
       bool isIncludeFolders
     );
-    
+
     bool filterString(xml::Node *kmlNode, std::string searchStr);
   };
 }

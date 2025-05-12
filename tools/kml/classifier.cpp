@@ -5,108 +5,79 @@
 
 namespace kml {
   
-  void Classifier::rearrange(
+  void Classifier::groupStyles(
     xml::Node *kmlNode,
     bool isCleanFolders,
     bool isIncludeFolders
   ) {
     if (kmlNode) {
-      
       std::cout << "KML-> Classifying attention. Action may have to be repeated\n"
-      << "      if there are duplicate folders in '--include-folders' mode\n";
-      
-      std::vector<std::string> styleDataStrVec;
-      std::vector<xml::Node*> newFolderNodes;
-      
-      StyleStrings kmlStyleStrings;
-      
-      bool isFirstPlcItr = true;
-      std::string styleDataStr;
-      int ctr = 0;
-      
-      for (auto &placemarkNode : kmlNode->getDescendantsByName("Placemark", true)) {
-        
-        if (isFirstPlcItr) {
-          styleDataStr = kmlStyleStrings.getPlacemarkStyleData(placemarkNode, true);
-          isFirstPlcItr = false;
+        << "      if there are duplicate folders in '--include-folders' mode\n";
+
+      StyleStrings kmlStyleStrings(kmlNode);
+      enum {pins_e, paths_e, others_e};
+
+      std::vector<xml::Node*> placemarks[3],
+        classifiedFolders = {
+          Builder::createFolder("PINS"),
+          Builder::createFolder("PATHS"),
+          Builder::createFolder("OTHERS")
+        };
+
+      for (xml::Node* plc : kmlNode->getDescendantsByName("Placemark", true)) {
+
+        if (plc->getFirstChildByName("Point")) {
+          placemarks[pins_e].push_back(plc);
         }
-        else styleDataStr = kmlStyleStrings.getPlacemarkStyleData(placemarkNode, false);
-        
-        int styleDataStrVec_foundDex = mini_tool::isPrimitiveInsideVector<std::string>(
-          styleDataStrVec, styleDataStr
-        );
-        
-        // remove from parent
-        if (!isIncludeFolders) {
-          placemarkNode->removeFromParent();
+        else if (plc->getFirstChildByName("LineString")) {
+          placemarks[paths_e].push_back(plc);
         }
-        
-        // there isn't any yet
-        if (styleDataStrVec_foundDex == -1) {
-          
-          styleDataStrVec.push_back(styleDataStr);
-          std::string folderName;
-          
-          if (kmlStyleStrings.isAColorCode(styleDataStr)) {
-            folderName = "PATHS " + styleDataStr;
-          }
-          else {
-            folderName = "PINS " + styleDataStr;
-          }
-          
-          newFolderNodes.push_back(Builder::createFolder(folderName));
-          
-          if (isIncludeFolders) {
-            Placemark::includeFolder(
-              placemarkNode,
-              newFolderNodes.back()
-            );
-          }
-          else {
-            newFolderNodes.back()->addChild(placemarkNode);
-          }
-        }
-        // already available
-        else {
-          xml::Node *folderNode = newFolderNodes.at(styleDataStrVec_foundDex);
-          
-          if (isIncludeFolders) {
-            Placemark::includeFolder(
-              placemarkNode,
-              folderNode
-            );
-          }
-          else folderNode->addChild(placemarkNode);
-        }
-        
-        ctr++;
+        else placemarks[others_e].push_back(plc);
       }
-      
-      // add the folders to a working folder //
-      
+
+      for (int i = 0; i < 3; i++) {
+
+        for (xml::Node* plc : placemarks[i]) {
+          kmlStyleStrings.classify(plc, i == pins_e);
+        }
+
+        for (auto &pair : kmlStyleStrings.classification) {
+          if (!pair.second.empty()) {
+
+            xml::Node *styleFolder = Builder::createFolder(pair.first, "unknown");
+            styleFolder->addChildren(pair.second);
+            classifiedFolders[i]->addChild(styleFolder);
+          }
+        }
+
+        kmlStyleStrings.classification.clear();
+      }
+
+      /** Add the folders to a working folder */
+
       xml::Node
-      *mainFolderNode = General::searchMainFolder(kmlNode),
-      *classifiedFolderNode = Builder::createFolder(definitions::CLASSIFY_COMMAND_WORKING_FOLDER);
-      
+        *mainFolderNode = General::searchMainFolder(kmlNode),
+        *workingFolderNode = Builder::createFolder(definitions::CLASSIFY_COMMAND_WORKING_FOLDER);
+
       if (isCleanFolders) {
         General::cleanFolders(
           mainFolderNode,
-          classifiedFolderNode,
-          newFolderNodes
+          workingFolderNode,
+          classifiedFolders
         );
       }
       else {
         General::insertEditedPlacemarksIntoFolder(
           mainFolderNode,
-          classifiedFolderNode,
-          newFolderNodes,
+          workingFolderNode,
+          classifiedFolders,
           {"Classifying placemarks", "Classify placemarks"},
           ""
         );
       }
     }
   }
-  
+
   bool Classifier::filterString(xml::Node *kmlNode, std::string searchStr) {
     if (kmlNode) {
       std::vector<xml::Node*> placemarks;
