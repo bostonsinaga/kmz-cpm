@@ -39,17 +39,17 @@ namespace kml {
     /** CHECK WHETHER INSIDE 'pointB' */
     
     int ctrA = 0,
-    ctrB = 0,
-    ctrC; // 'C' is prioritize
-    
+      ctrB = 0,
+      ctrC; // 'C' is prioritize
+
     std::vector<int> matchedIndexes[2]; // {originals, duplicates}
     bool isFirstPlcItr = true;
     
     std::vector<std::string>
-    testStr_A_vec,
-    testStr_B_vec,
-    *testStr_C_vec; // 'C' is prioritize
-    
+      testStr_A_vec,
+      testStr_B_vec,
+      *testStr_C_vec; // 'C' is prioritize
+
     Point *pointC;
     const Point farPoint_const = Point(std::pow(10, 9), std::pow(10, 9));
     
@@ -509,18 +509,19 @@ namespace kml {
     }
   }
 
-  /* limited from 0 to 100 meters */
+  // limited from 0 to 100 meters
   double TwinsChecker::getLimitedMeterRadius(std::string meterRadiusRateString) {
-    
+
     double meterRadius = mini_tool::filterStringDecimal(meterRadiusRateString);
     meterRadius = std::abs(meterRadius);
-    
+
     if (meterRadius > 100.0) {
       std::cerr << "KML-> Twins checking warning. The given radius exceeds 100 meters.\n"
-      << "      Radius is set to limit.\n";
+        << "      Radius is set to limit.\n";
+
       meterRadius = 100.0;
     }
-    
+
     return meterRadius;
   }
 
@@ -626,14 +627,13 @@ namespace kml {
     if (kmlNode) {
       /**
        * Array:
-       * index '0' is pins
-       * index '1' is paths
+       * Index '0' is pins.
+       * Index '1' is paths.
        */
-
       bool isFirstPlcItr = true;
       std::vector<std::string> styleUrlVec[2];
       std::vector<xml::Node*> placemarkNodesVec[2];
-      
+
       placemarkNodesVec[0] = kmlNode->getDescendantsByName("Point", true);
       placemarkNodesVec[1] = kmlNode->getDescendantsByName("LineString", true);
       

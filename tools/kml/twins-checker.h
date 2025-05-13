@@ -6,7 +6,7 @@
 namespace kml {
   
   class TwinsChecker {
-    private:
+  private:
     class Prioritize {
       public:
       static void testTextObtain(
@@ -29,7 +29,7 @@ namespace kml {
       );
     };
     
-    public:
+  public:
     TwinsChecker() {}
     
     xml::Node *findPins(
@@ -67,22 +67,22 @@ namespace kml {
       bool isParentFolderNamedAType,
       bool isIncludeFolders
     );
-    
-    /*
-    -clean copies of icon urls or color codes that contained inside separate 'StyleMap'
-    to reduce size of 'kml' file and also rename the 'styleUrl' to templated names
-    (note that this operation will rewrite previous tidied styles)
-    
-    -this won't keep the previous pins or paths size but will use default size
-    
-    -command: 'tidy-up-styles'
-    */
+
+    /**
+     * Clean copies of icon urls or color codes that contained inside separate 'StyleMap'
+     * to reduce size of 'kml' file and also rename the 'styleUrl' to templated names
+     * (note that this operation will rewrite previous tidied styles).
+     * 
+     * This won't keep the previous pins or paths size but will use default size/
+     * 
+     * Command: 'tidy-up-styles'
+     */
     bool tidyUpStyles(xml::Node *kmlNode);
     
     private:
-    /* limited from 0 to 100 meters */
+    // limited from 0 to 100 meters
     double getLimitedMeterRadius(std::string meterRadiusRateString);
-    
+
     // used when 'find' function's 'isOnlySimilarStyle' is true
     bool checkSimilarStyle(
       xml::Node *placemark_A,
