@@ -77,11 +77,12 @@ namespace geometrics {
     utils::VecTools<Point>::cleanDuplicateInside(laserIntersections);
 
     for (int i = 0; i < laserIntersections.size(); i++) {
+      Rect verRect = Rect(
+        laserIntersections[i],
+        Size(step)
+      );
 
-      Rect verRect = Rect(laserIntersections[i], Size(step));
-
-      for (
-        double x = polygon.getFarMin().X();
+      for (double x = polygon.getFarMin().X();
         x <= point.X();
         x += step
       ) {
