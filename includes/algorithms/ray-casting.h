@@ -10,19 +10,22 @@ namespace geometrics {
 
   class RayCasting {
   public:
-    static bool checkCollide();
-    static bool checkIntersect();
-
-    static bool checkInside(
-      Point point,
-      Polygon &polygon,
-      double step
+    static bool collide(
+      const Point &point,
+      const Polygon &polygon,
+      mt::CR_DBL step
     );
 
-    static bool checkInside(
-      Point point,
-      Polygon &&polygon,
-      double step
+    static bool intersect(
+      const Point &point,
+      const Polygon &polygon,
+      mt::CR_DBL step
+    );
+
+    static bool inside(
+      const Point &point,
+      const Polygon &polygon,
+      mt::CR_DBL step
     );
   };
 }}}
