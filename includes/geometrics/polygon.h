@@ -1,12 +1,10 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_H__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_H__
+#ifndef __GEOTON__GEOMETRIC__POLYGON_HPP__
+#define __GEOTON__GEOMETRIC__POLYGON_HPP__
 
-#include <vector>
 #include "rect.h"
 
-namespace mini_tools {
-namespace algorithms {
-namespace geometrics {
+namespace geoton {
+namespace geometric {
 
   class Polygon {
   private:
@@ -141,6 +139,6 @@ namespace geometrics {
     std::vector<Point> getVertices() { return vertices; }  // returns the copy
     int verticesCount() { return vertices.size(); }
   };
-}}}
+}}
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_H__
+#endif // __GEOTON__GEOMETRIC__POLYGON_HPP__

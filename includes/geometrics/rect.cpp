@@ -1,11 +1,10 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_CPP__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_CPP__
+#ifndef __GEOTON__GEOMETRIC__RECT_CPP__
+#define __GEOTON__GEOMETRIC__RECT_CPP__
 
 #include "rect.h"
 
-namespace mini_tools {
-namespace algorithms {
-namespace geometrics {
+namespace geoton {
+namespace geometric {
 
   Rect::Rect(
     Point position_in,
@@ -77,6 +76,6 @@ namespace geometrics {
     }
     return false;
   }
-}}}
+}}
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_CPP__
+#endif // __GEOTON__GEOMETRIC__RECT_CPP__

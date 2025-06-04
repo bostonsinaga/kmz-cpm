@@ -1,5 +1,5 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS_H__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS_H__
+#ifndef __GEOTON__GEOMETRIC_HPP__
+#define __GEOTON__GEOMETRIC_HPP__
 
 #include "point.h"
 #include "size.h"
@@ -7,4 +7,4 @@
 #include "polygon.h"
 #include "ray-casting.h"
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS_H__
+#endif // __GEOTON__GEOMETRIC_HPP__

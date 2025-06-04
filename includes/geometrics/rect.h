@@ -1,11 +1,10 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_H__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_H__
+#ifndef __GEOTON__GEOMETRIC__RECT_HPP__
+#define __GEOTON__GEOMETRIC__RECT_HPP__
 
 #include "size.h"
 
-namespace mini_tools {
-namespace algorithms {
-namespace geometrics {
+namespace geoton {
+namespace geometric {
 
   class Rect {
   private:
@@ -49,6 +48,6 @@ namespace geometrics {
     bool inside(Rect bb);
     bool intersect(Rect bb);
   };
-}}}
+}}
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS__BOUNDING_BOX_H__
+#endif // __GEOTON__GEOMETRIC__RECT_HPP__

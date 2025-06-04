@@ -1,12 +1,11 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_CPP__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_CPP__
+#ifndef __GEOTON__GEOMETRIC__POLYGON_CPP__
+#define __GEOTON__GEOMETRIC__POLYGON_CPP__
 
 #include "polygon.h"
-#include "../../utils/vec-tools.h"
 
-namespace mini_tools {
-namespace algorithms {
-namespace geometrics {
+namespace geoton {
+namespace geometric {
+
   //______|
   // RECT |
   //______|
@@ -140,4 +139,4 @@ namespace geometrics {
   }
 }}}
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POLYGON_CPP__
+#endif // __GEOTON__GEOMETRIC__POLYGON_CPP__

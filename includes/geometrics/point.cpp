@@ -1,13 +1,12 @@
-#ifndef __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POINT_CPP__
-#define __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POINT_CPP__
+#ifndef __GEOTON__GEOMETRIC__POINT_CPP__
+#define __GEOTON__GEOMETRIC__POINT_CPP__
 
 #include <cmath>
 #include <cfloat>
 #include "point.h"
 
-namespace mini_tools {
-namespace algorithms {
-namespace geometrics {
+namespace geoton {
+namespace geometric {
 
   double Point::gradient() {
     if (x == 0) return DBL_MAX * y / std::abs(y);
@@ -189,6 +188,6 @@ namespace geometrics {
   bool Point::operator>=(CR_DBL num) {
     return x >= num && y >= num;
   }
-}}}
+}}
 
-#endif // __MINI_TOOLS__ALGORITHMS__GEOMETRICS__POINT_CPP__
+#endif // __GEOTON__GEOMETRIC__POINT_CPP__
