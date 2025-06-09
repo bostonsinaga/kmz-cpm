@@ -1,11 +1,10 @@
-# geoton v1.1.3 2023-07-08
+# geoton v1.1.4 patch 2025-06-09
 ****************************************************************
 *Departure from v0.10.4 ALPHA 2023-03-22*
 ****************************************************************
 
 Hello there,</br>
-I've created software named **geoton**.</br>
-A simple and useful **Google Earth** *'.kml'* editor program.</br>
+This is **geoton**, a simple and useful **Google Earth** *'.kml'* editor program.</br>
 I started developing it from *2022 November 14th (version 0.1.0)*.</br>
 
 **WHAT THINGS YOU CAN DO WITH THIS ARE:**</br>
