@@ -69,7 +69,7 @@ std::vector<std::string> Converter::convertCoor_decimalDegree(
 
     for (auto &str : coorStrCouple) {
 
-        coor = std::stod(str);
+        coor = mini_tool::safe_stod(str);
         deg = std::to_string(std::abs(int(coor))) + mini_tool::DEGREE_SIGN;
         minNum = (coor - int(coor)) * 60.0;
         sec = std::to_string(std::abs(minNum - int(minNum)) * 60.0) + "\"";
@@ -178,7 +178,7 @@ std::vector<std::string> Converter::convertCoor_degreeDecimal(
                 int deg = std::stoi(degStr),
                     min = std::stoi(minStr);
                 
-                double sec = std::stod(secStr);
+                double sec = mini_tool::safe_stod(secStr);
 
                 // PRODUCT
                 coor = (sec / 60.0) + min;

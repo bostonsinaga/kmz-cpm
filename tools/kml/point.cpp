@@ -140,8 +140,8 @@ Point::Point(std::string coorString) {
             );
         }
         
-        x = std::stod(coorStringVec.at(X));
-        y = std::stod(coorStringVec.at(Y));
+        x = mini_tool::safe_stod(coorStringVec.at(X));
+        y = mini_tool::safe_stod(coorStringVec.at(Y));
     }
 }
 
