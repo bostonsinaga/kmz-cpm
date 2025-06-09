@@ -1,5 +1,13 @@
-project(geoton)
-cmake_minimum_required( VERSION 4.0.1 )
+cmake_minimum_required(VERSION 3.20)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+project(geoton VERSION 1.1.4)
+
+message(STATUS "Project version: ${PROJECT_VERSION}")
+message(STATUS "Major version: ${PROJECT_VERSION_MAJOR}")
+message(STATUS "Minor version: ${PROJECT_VERSION_MINOR}")
+message(STATUS "Patch version: ${PROJECT_VERSION_PATCH}")
 
 find_package( GeographicLib REQUIRED )
 include_directories( ${GeographicLib_INCLUDE_DIRS} )
