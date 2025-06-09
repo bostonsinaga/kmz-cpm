@@ -113,6 +113,12 @@ public:
   static std::vector<T> collapse2DTo1DVector(
     std::vector<std::vector<T>> &vec_in
   );
+
+  /**
+   * Avoid runtime error with exception handling.
+   * Return 0 by default.
+   */
+  static double safe_stod(const std::string &str);
 };
 
 #include "mini-tool.tpp"

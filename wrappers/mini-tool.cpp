@@ -198,4 +198,13 @@ double mini_tool::filterStringDecimal(std::string strIn) {
   return std::stod(strVal);
 }
 
+double mini_tool::safe_stod(const std::string &str) {
+  double num;
+
+  try { num = std::stod(str); }
+  catch (...) {}
+
+  return num;
+}
+
 #endif // __MINI_TOOL_CPP__
