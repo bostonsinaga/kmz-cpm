@@ -1,3 +1,3 @@
-[submodule "submodules/cli-menu"]
-	path = submodules/cli-menu
+[submodule "cli-menu"]
+	path = cli-menu
 	url = https://github.com/bostonsinaga/cli-menu.git
