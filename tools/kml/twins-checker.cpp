@@ -8,13 +8,13 @@ namespace kml {
   // return working folder node
   xml::Node *TwinsChecker::findPins(
     xml::Node *kmlNode,
-    std::string meterRadiusRateString,
+    std::string meterRadiusString,
     bool isParentFolderNamedAType,
     bool isIncludeFolders,
     bool isOnlySimilarStyle,
     bool isPrioritizePrintAboutMessage
   ) {
-    double meterRadius = getLimitedMeterRadius(meterRadiusRateString);
+    double meterRadius = getLimitedMeterRadius(meterRadiusString);
     
     std::vector<xml::Node*> nodes;
     std::vector<Point> pointVec;
@@ -143,7 +143,7 @@ namespace kml {
 
   xml::Node *TwinsChecker::findPaths(
     xml::Node *kmlNode,
-    std::string meterRadiusRateString,
+    std::string meterRadiusString,
     bool isParentFolderNamedAType,
     bool isIncludeFolders,
     bool isOnlySimilarStyle,
@@ -153,7 +153,7 @@ namespace kml {
     std::cerr << "KML-> Twins checking attention. This will sanitize/remove\n"
       << "      zero path (single coordinate) or empty path\n";
     
-    double meterRadius = getLimitedMeterRadius(meterRadiusRateString);
+    double meterRadius = getLimitedMeterRadius(meterRadiusString);
     std::vector<xml::Node*> nodes;
     
     // may contains empty point vector
@@ -383,16 +383,16 @@ namespace kml {
 
   xml::Node *TwinsChecker::findAll(
     xml::Node *kmlNode,
-    std::string meterRadiusRateString,
+    std::string meterRadiusString,
     bool isIncludeFolders,
     bool isOnlySimilarStyle,
     bool isPathTextPrioritizeFirst
   ) {
     Prioritize::printAboutMessage();
-    
+
     xml::Node *pinsFolder = findPins(
       kmlNode,
-      meterRadiusRateString,
+      meterRadiusString,
       true,
       isIncludeFolders,
       isOnlySimilarStyle,
@@ -401,7 +401,7 @@ namespace kml {
     
     xml::Node *pathsFolder = findPaths(
       kmlNode,
-      meterRadiusRateString,
+      meterRadiusString,
       true,
       isIncludeFolders,
       isOnlySimilarStyle,
@@ -510,14 +510,15 @@ namespace kml {
   }
 
   // limited from 0 to 100 meters
-  double TwinsChecker::getLimitedMeterRadius(std::string meterRadiusRateString) {
+  double TwinsChecker::getLimitedMeterRadius(std::string meterRadiusString) {
 
-    double meterRadius = mini_tool::filterStringDecimal(meterRadiusRateString);
+    double meterRadius = mini_tool::filterStringDecimal(meterRadiusString);
     meterRadius = std::abs(meterRadius);
 
     if (meterRadius > 100.0) {
-      std::cerr << "KML-> Twins checking warning. The given radius exceeds 100 meters.\n"
-        << "      Radius is set to limit.\n";
+      std::cerr
+        << "\033[33mKML: 'TwinsChecker' warning.\033[0m\n"
+        << "The given radius exceeds 100 meters. The radius is now set to the limit.\n";
 
       meterRadius = 100.0;
     }

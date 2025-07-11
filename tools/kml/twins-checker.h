@@ -19,19 +19,19 @@ namespace kml {
         std::vector<std::string> &testStr_B_vec_in,   // 'B' should be win
         std::vector<std::string> &otherIgnoredStrings_in
       );
-      
+
       static void printAboutMessage();
-      
+
       private:
       static bool isNoname(
         std::string &testStr,
         std::vector<std::string> &otherIgnoredStrings_in
       );
     };
-    
+
   public:
     TwinsChecker() {}
-    
+
     xml::Node *findPins(
       xml::Node *kmlNode,
       std::string meterRadiusRateString,
@@ -73,7 +73,7 @@ namespace kml {
      * to reduce size of 'kml' file and also rename the 'styleUrl' to templated names
      * (note that this operation will rewrite previous tidied styles).
      * 
-     * This won't keep the previous pins or paths size but will use default size/
+     * This won't keep the previous pins or paths size but will use default size
      * 
      * Command: 'tidy-up-styles'
      */
