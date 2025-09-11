@@ -1,11 +1,11 @@
-# geoton v1.1.4 patch 2025-06-09
-****************************************************************
-*Departure from v0.10.4 ALPHA 2023-03-22*
-****************************************************************
+# KMZ-CPM v2.0.0 patch 2025-06-09
+*Departure from:*
+*Geoton v1.1.4 2025-06-09*
+*KML-TOWN v1.1.3 2023-07-08*
+*KML-TOWN v0.10.4 ALPHA 2023-03-22*
 
-Hello there,</br>
-This is **geoton**, a simple and useful **Google Earth** *'.kml'* editor program.</br>
-I started developing it from *2022 November 14th (version 0.1.0)*.</br>
+A tool to analyze kmz/kml data of Google Earth.
+Generate tree from text file, string, csv, or kmz/kml.
 
 **WHAT THINGS YOU CAN DO WITH THIS ARE:**</br>
 -- **convert** into *'.kml'* from *'.txt'* exported **WhatsApp** chat of share locations with their date</br>
