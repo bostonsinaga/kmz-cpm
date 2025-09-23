@@ -10,8 +10,7 @@ int main(int argc, char *argv[]) {
   cm::Program<cm::Boolean> *cm_kmzcpm = cm::Program<cm::Boolean>::create(
     "kmzcpm",
     cm::ProgramAbout(
-      "KMZ Copy Paste Machine.\n" +
-      "Edit and analyze KML/KMZ geospatial data.",
+      "KMZ Copy Paste Machine.\nEdit and analyze KML/KMZ geospatial data.",
       "Boston Sinaga",
       "https://github.com/bostonsinaga/kmz-cpm",
       cm::ProgramVersion(2, 0, 0)
@@ -22,6 +21,9 @@ int main(int argc, char *argv[]) {
   initTXTMenu(cm_kmzcpm);
   initKMLMenu(cm_kmzcpm);
   initCSVMenu(cm_kmzcpm);
+
+  // theme
+  cm::Console::outlineStyle = false;
 
   // run and destroy
   cm_kmzcpm->run(argc, argv);

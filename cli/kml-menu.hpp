@@ -15,9 +15,9 @@ void initKMLMenu(cm::Program<cm::Boolean> *cm_kmzcpm) {
   cm::Boolean *cm_crop = cm_kml->createBoolean(
     "crop",
     "Crop placemarks inside a polygon",
-    [](cm::Command *node)->bool {
-      std::cout << "> HELLO CROP\n";
-      return true;
+    [](cm::Command *node)->cm::COMMAND_CALLBACK_CODE {
+      std::cout << "> hello '" + node->getKeyword() + "'\n";
+      return cm::COMMAND_CALLBACK_SUCCEEDED;
     }
   );
 
