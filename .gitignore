@@ -1,2 +1,2 @@
 build/*
-build-scripts/kmzcpm.exe
+test/kmzcpm.exe
