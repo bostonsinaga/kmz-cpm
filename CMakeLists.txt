@@ -8,21 +8,7 @@ message(STATUS "Major version: ${PROJECT_VERSION_MAJOR}")
 message(STATUS "Minor version: ${PROJECT_VERSION_MINOR}")
 message(STATUS "Patch version: ${PROJECT_VERSION_PATCH}")
 
-find_package(Boost REQUIRED)
 find_package(GeographicLib REQUIRED)
-
-# find all required 'LIBKML'
-find_library(KMLBASE_LIBRARY NAMES kmlbase PATHS "/ucrt64/lib")
-find_library(KMLDOM_LIBRARY NAMES kmldom PATHS "/ucrt64/lib")
-find_library(KMLENGINE_LIBRARY NAMES kmlengine PATHS "/ucrt64/lib")
-find_library(KMLCONVENIENCE_LIBRARY NAMES kmlconvenience PATHS "/ucrt64/lib")
-
-set(LIBKML_LIBRARIES
-  ${KMLBASE_LIBRARY}
-  ${KMLDOM_LIBRARY}
-  ${KMLENGINE_LIBRARY}
-  ${KMLCONVENIENCE_LIBRARY}
-)
 
 # for non-MSVC (Linux/macOS) builds
 if (NOT MSVC)
@@ -34,9 +20,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cli)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  ${Boost_LIBRARIES}
   ${GeographicLib_LIBRARIES}
-  ${LIBKML_LIBRARIES}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cli-menu/includes)
@@ -57,4 +41,3 @@ if (MSVC)
       COMMENT "Copying shared library for GeographicLib")
   endif()
 endif()
-
