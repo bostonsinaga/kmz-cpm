@@ -1,6 +1,5 @@
 set (SOURCES
-  kml/read.cpp
-  kml/write.cpp
+  xml/node.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})

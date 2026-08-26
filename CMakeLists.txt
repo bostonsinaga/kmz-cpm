@@ -8,36 +8,19 @@ message(STATUS "Major version: ${PROJECT_VERSION_MAJOR}")
 message(STATUS "Minor version: ${PROJECT_VERSION_MINOR}")
 message(STATUS "Patch version: ${PROJECT_VERSION_PATCH}")
 
-find_package(GeographicLib REQUIRED)
-
-# for non-MSVC (Linux/macOS) builds
-if (NOT MSVC)
-  set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
-endif()
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MINIZIP REQUIRED minizip IMPORTED_TARGET)
+pkg_check_modules(GEOGRAPHICLIB REQUIRED geographiclib IMPORTED_TARGET)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cli-menu)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cli)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  ${GeographicLib_LIBRARIES}
+  PkgConfig::MINIZIP
+  PkgConfig::GEOGRAPHICLIB
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cli-menu/includes)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/includes)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-# only for 'GeographicLib'
-if (MSVC)
-  get_target_property( _LIBTYPE ${GeographicLib_LIBRARIES} TYPE )
-
-  if (_LIBTYPE STREQUAL "SHARED_LIBRARY")
-
-    # On Windows systems, copy the shared library to build directory
-    add_custom_command (TARGET ${PROJECT_NAME} POST_BUILD
-
-      COMMAND ${CMAKE_COMMAND} -E
-      copy $<TARGET_FILE:${GeographicLib_LIBRARIES}> ${CMAKE_CFG_INTDIR}
-      COMMENT "Copying shared library for GeographicLib")
-  endif()
-endif()
