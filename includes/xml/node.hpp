@@ -9,8 +9,8 @@ namespace xml {
   class Node;
 
   struct CDATA {
-    Node *innerNode;
-    std::string innerText;
+    Node *innerNode = nullptr;
+    std::string innerText = "";
     std::string stringify() const { return ""; }
   };
 
@@ -22,7 +22,6 @@ namespace xml {
     typedef std::function<bool(Node*)> CALLBACK;
 
   private:
-    std::string name;
     mt::UNORMAP_STR<std::string> attributes;
     mt::UNORMAP_STR<CDATA> cattributes;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
@@ -31,8 +30,12 @@ namespace xml {
     void init();
 
   public:
+    std::string name, text;
+    CDATA cdata;
+
     Node() { init(); }
-    Node(mt::CR_STR str) : name(str) { init(); };
+    Node(mt::CR_STR name_in) : name(name_in) { init(); };
+    Node(mt::CR_STR name_in, mt::CR_STR text_in) : name(name_in), text(text_in) { init(); };
 
     /** GETTERS */
 
@@ -40,7 +43,6 @@ namespace xml {
     inline Node *next() const { return quad[EAST]; }
     inline Node *parent() const { return quad[NORTH]; }
     inline Node *children() const { return quad[SOUTH]; }
-    inline std::string tag() const { return name; }
     inline bool alone() const { return prev() == this; }
     std::string value(mt::CR_STR key);
     CDATA valuec(mt::CR_STR key);
@@ -51,14 +53,13 @@ namespace xml {
     void connect(Node *node);
     void parent(Node *node);
     void children(Node *node);
-    void tag(mt::CR_STR str) { name = str; }
 
     void value(mt::CR_STR key, mt::CR_STR str) {
       attributes[key] = str;
     }
 
-    void valuec(mt::CR_STR key, mt::CR<CDATA> cdata) {
-      cattributes[key] = cdata;
+    void valuec(mt::CR_STR key, mt::CR<CDATA> cdt) {
+      cattributes[key] = cdt;
     }
 
     /** ITERATIONS */
