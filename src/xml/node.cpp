@@ -13,6 +13,17 @@ namespace xml {
     return topmost;
   }
 
+  std::string Node::uniname() {
+    std::string uname;
+
+    for (mt::CR_STR nm : names) {
+      uname += nm + ':';
+    }
+
+    if (!uname.empty()) uname.pop_back();
+    return uname;
+  }
+
   std::string Node::value(mt::CR_STR key) {
     if (attributes.find(key) != attributes.end()) {
       return attributes[key];

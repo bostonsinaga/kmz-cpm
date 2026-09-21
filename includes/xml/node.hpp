@@ -30,12 +30,15 @@ namespace xml {
     void init();
 
   public:
-    std::string name, text;
+    mt::VEC_STR names;
+    std::string text;
     CDATA cdata;
 
     Node() { init(); }
-    Node(mt::CR_STR name_in) : name(name_in) { init(); };
-    Node(mt::CR_STR name_in, mt::CR_STR text_in) : name(name_in), text(text_in) { init(); };
+    Node(mt::CR_STR name_in) : names({name_in}) { init(); };
+    Node(mt::CR_STR name_in, mt::CR_STR text_in) : names({name_in}), text(text_in) { init(); };
+    Node(mt::CR_VEC_STR names_in) : names(names_in) { init(); };
+    Node(mt::CR_VEC_STR names_in, mt::CR_STR text_in) : names(names_in), text(text_in) { init(); };
 
     /** GETTERS */
 
@@ -44,6 +47,8 @@ namespace xml {
     inline Node *parent() const { return quad[NORTH]; }
     inline Node *children() const { return quad[SOUTH]; }
     inline bool alone() const { return prev() == this; }
+
+    std::string uniname();
     std::string value(mt::CR_STR key);
     CDATA valuec(mt::CR_STR key);
     Node *root();
