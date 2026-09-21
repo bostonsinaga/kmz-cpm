@@ -8,6 +8,14 @@ namespace xml {
 
   class Node;
 
+  struct Declaration {
+    std::string type, encoding;
+
+    struct Version {
+      int major = 0, minor = 0;
+    } version;
+  };
+
   struct CDATA {
     Node *innerNode = nullptr;
     std::string innerText = "";
@@ -30,6 +38,8 @@ namespace xml {
     void init();
 
   public:
+    inline static Declaration declaration;
+
     mt::VEC_STR names;
     std::string text;
     CDATA cdata;
