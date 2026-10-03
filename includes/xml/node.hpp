@@ -7,19 +7,27 @@ namespace kmzcpm {
 namespace xml {
 
   class Node;
+  class CDATA;
+  class Comment;
 
   struct Declaration {
     std::string type, encoding;
 
     struct Version {
       int major = 0, minor = 0;
+
+      std::string stringify() {
+        return std::to_string(major) + '.' + std::to_string(minor);
+      }
     } version;
+
+    std::string stringify() {
+      return "";
+    }
   };
 
-  struct CDATA {
-    Node *innerNode = nullptr;
-    std::string innerText = "";
-    std::string stringify() const { return ""; }
+  enum NodeType {
+    BaseType, CDATAType, CommentType
   };
 
   class Node {
@@ -31,24 +39,24 @@ namespace xml {
 
   private:
     mt::UNORMAP_STR<std::string> attributes;
-    mt::UNORMAP_STR<CDATA> cattributes;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
 
+  protected:
+    NodeType type;
+    std::string text;
+
     ~Node() {}
-    void init();
+    virtual void init();
 
   public:
+    mt::VEC_STR names {""};
     inline static Declaration declaration;
 
-    mt::VEC_STR names;
-    std::string text;
-    CDATA cdata;
-
     Node() { init(); }
-    Node(mt::CR_STR name_in) : names({name_in}) { init(); };
-    Node(mt::CR_STR name_in, mt::CR_STR text_in) : names({name_in}), text(text_in) { init(); };
-    Node(mt::CR_VEC_STR names_in) : names(names_in) { init(); };
-    Node(mt::CR_VEC_STR names_in, mt::CR_STR text_in) : names(names_in), text(text_in) { init(); };
+    Node(mt::CR_STR name_in) : names({name_in}) { init(); }
+    Node(mt::CR_STR name_in, mt::CR_STR text_in) : names({name_in}), text(text_in) { init(); }
+    Node(mt::CR_VEC_STR names_in) : names(names_in) { init(); }
+    Node(mt::CR_VEC_STR names_in, mt::CR_STR text_in) : names(names_in), text(text_in) { init(); }
 
     /** GETTERS */
 
@@ -58,28 +66,35 @@ namespace xml {
     inline Node *children() const { return quad[SOUTH]; }
     inline bool alone() const { return prev() == this; }
 
-    std::string uniname();
-    std::string value(mt::CR_STR key);
-    CDATA valuec(mt::CR_STR key);
     Node *root();
+
+    std::string uniname();
+    std::string stringify();
+    std::string getValue(mt::CR_STR key);
+    std::string getText() { return text; }
+
+    virtual std::string ostringy();
+    virtual std::string cstringy();
 
     /** SETTERS */
 
     void connect(Node *node);
-    void parent(Node *node);
-    void children(Node *node);
+    void setParent(Node *node);
+    void addChild(Node *node);
+    void cleanChildren();
 
-    void value(mt::CR_STR key, mt::CR_STR str) {
+    void setValue(mt::CR_STR key, mt::CR_STR str) {
       attributes[key] = str;
     }
 
-    void valuec(mt::CR_STR key, mt::CR<CDATA> cdt) {
-      cattributes[key] = cdt;
+    void setText(mt::CR_STR str) {
+      cleanChildren();
+      text = str;
     }
 
     /** ITERATIONS */
 
-    void foreach(
+    void forEach(
       mt::CR<DIRECTION> direction,
       mt::CR<CALLBACK> callback
     );
@@ -96,6 +111,20 @@ namespace xml {
     void detach();
     void destroy(mt::CR_BOL detached = true);
     void annihilate(mt::CR<DIRECTION> direction = LEFT);
+  };
+
+  class CDATA : public Node {
+  private:
+    void init() override;
+    std::string ostringy() override;
+    std::string cstringy() override { return ""; }
+  };
+
+  class Comment : public Node {
+  private:
+    void init() override;
+    std::string ostringy() override;
+    std::string cstringy() override { return ""; }
   };
 }}
 

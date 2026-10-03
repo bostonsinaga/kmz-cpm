@@ -24,21 +24,41 @@ namespace xml {
     return uname;
   }
 
-  std::string Node::value(mt::CR_STR key) {
+  std::string Node::stringify() {
+    std::string ostr, cstr;
+
+    traverse(RIGHT, [&](Node* current)->bool {
+      ostr += current->ostringy();
+      cstr += current->cstringy();
+      return true;
+    });
+
+    return ostr + cstr;
+  }
+
+  std::string Node::getValue(mt::CR_STR key) {
     if (attributes.find(key) != attributes.end()) {
       return attributes[key];
     }
     return "";
   }
 
-  CDATA Node::valuec(mt::CR_STR key) {
-    if (cattributes.find(key) != cattributes.end()) {
-      return cattributes[key];
+  std::string Node::ostringy() {
+    std::string attstr;
+
+    for (mt::CR_PAIR_STR keyval : attributes) {
+      attstr += ' ' + keyval.first + "=\"" + keyval.second + '"';
     }
-    return CDATA();
+
+    return '<' + uniname() + attstr + (children() ? ">" : "/>");
+  }
+
+  std::string Node::cstringy() {
+    return children() ? ("</" + uniname() + '>') : "";
   }
 
   void Node::init() {
+    type = BaseType;
     quad[WEST] = this;
     quad[EAST] = this;
   }
@@ -53,18 +73,18 @@ namespace xml {
     }
   }
 
-  void Node::parent(Node *node) {
+  void Node::setParent(Node *node) {
     if (node) {
-      node->children(this);
+      node->addChild(this);
 
-      foreach(RIGHT, [&](Node *current)->bool {
+      forEach(RIGHT, [&](Node *current)->bool {
         current->quad[NORTH] = node;
         return true;
       });
     }
   }
 
-  void Node::children(Node *node) {
+  void Node::addChild(Node *node) {
     if (node) {
       if (children()) children()->connect(node);
       else quad[SOUTH] = node;
@@ -72,7 +92,17 @@ namespace xml {
     }
   }
 
-  void Node::foreach(
+  void Node::cleanChildren() {
+    if (children()) {
+      children()->annihilate();
+      quad[NORTH] = nullptr;
+      quad[EAST] = nullptr;
+      quad[SOUTH] = nullptr;
+      quad[WEST] = nullptr;
+    }
+  }
+
+  void Node::forEach(
     mt::CR<DIRECTION> direction,
     mt::CR<CALLBACK> callback
   ) {
@@ -151,7 +181,7 @@ namespace xml {
   void Node::destroy(mt::CR_BOL detached) {
     if (children()) {
       children()->traverse(
-        RIGHT, [](Node * current)->bool {
+        RIGHT, [](Node *current)->bool {
           delete current;
           return true;
         }
@@ -163,10 +193,34 @@ namespace xml {
   }
 
   void Node::annihilate(mt::CR<DIRECTION> direction) {
-    quad[direction]->foreach(direction, [](Node *node)->bool {
+    quad[direction]->forEach(direction, [](Node *node)->bool {
       node->destroy(false);
       return true;
     });
+  }
+
+  /** CDATA */
+
+  void CDATA::init() {
+    Node::init();
+    type = CDATAType;
+  }
+
+  std::string CDATA::ostringy() {
+    return "<![CDATA[" + (
+      children() ? children()->stringify() : text
+    ) + "]]>";
+  }
+
+  /** COMMENT */
+
+  void Comment::init() {
+    Node::init();
+    type = CommentType;
+  }
+
+  std::string Comment::ostringy() {
+    return "<!-- " + text + " -->";
   }
 }}
 
