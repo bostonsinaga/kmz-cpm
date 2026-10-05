@@ -58,6 +58,14 @@ namespace xml {
   }
 
   void Node::init() {
+    if (children()) {
+      children()->traverse(RIGHT, [&](Node *current)->bool {
+        current->depth -= depth;
+        return true;
+      });
+    }
+
+    depth = 0;
     type = BaseType;
     quad[WEST] = this;
     quad[EAST] = this;
@@ -70,6 +78,7 @@ namespace xml {
       tail->quad[EAST] = this;
       prev()->quad[EAST] = node;
       quad[WEST] = tail;
+      node->quad[NORTH] = quad[NORTH];
     }
   }
 
@@ -89,6 +98,7 @@ namespace xml {
       if (children()) children()->connect(node);
       else quad[SOUTH] = node;
       node->quad[NORTH] = this;
+      node->depth = depth + 1;
     }
   }
 
@@ -178,7 +188,7 @@ namespace xml {
     init();
   }
 
-  void Node::destroy(mt::CR_BOL detached) {
+  void Node::destroy() {
     if (children()) {
       children()->traverse(
         RIGHT, [](Node *current)->bool {
@@ -188,13 +198,12 @@ namespace xml {
       );
     }
 
-    if (detached) detach();
     delete this;
   }
 
   void Node::annihilate(mt::CR<DIRECTION> direction) {
     quad[direction]->forEach(direction, [](Node *node)->bool {
-      node->destroy(false);
+      node->destroy();
       return true;
     });
   }

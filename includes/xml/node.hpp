@@ -38,6 +38,7 @@ namespace xml {
     typedef std::function<bool(Node*)> CALLBACK;
 
   private:
+    size_t depth = 0;
     mt::UNORMAP_STR<std::string> attributes;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
 
@@ -72,6 +73,7 @@ namespace xml {
     std::string stringify();
     std::string getValue(mt::CR_STR key);
     std::string getText() { return text; }
+    size_t getDepth() { return depth; }
 
     virtual std::string ostringy();
     virtual std::string cstringy();
@@ -109,7 +111,7 @@ namespace xml {
     /** REMOVALS */
 
     void detach();
-    void destroy(mt::CR_BOL detached = true);
+    void destroy();
     void annihilate(mt::CR<DIRECTION> direction = LEFT);
   };
 
