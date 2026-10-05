@@ -22,7 +22,9 @@ namespace xml {
     } version;
 
     std::string stringify() {
-      return "";
+      return "<?" + type
+      + "version=\"" + version.stringify() + '"'
+      + "encoding=\"" + encoding + "\"?>";
     }
   };
 
