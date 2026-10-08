@@ -79,6 +79,7 @@ namespace xml {
       prev()->quad[EAST] = node;
       quad[WEST] = tail;
       node->quad[NORTH] = quad[NORTH];
+      node->depth = depth;
     }
   }
 
@@ -96,9 +97,11 @@ namespace xml {
   void Node::addChild(Node *node) {
     if (node) {
       if (children()) children()->connect(node);
-      else quad[SOUTH] = node;
-      node->quad[NORTH] = this;
-      node->depth = depth + 1;
+      else {
+        quad[SOUTH] = node;
+        node->quad[NORTH] = this;
+        node->depth = depth + 1;
+      }
     }
   }
 
@@ -116,6 +119,7 @@ namespace xml {
     mt::CR<DIRECTION> direction,
     mt::CR<CALLBACK> callback
   ) {
+    if (!callback) return;
     Node *current = this;
 
     do {
@@ -129,6 +133,8 @@ namespace xml {
     mt::CR<DIRECTION> direction,
     mt::CR<CALLBACK> callback
   ) {
+    if (!callback) return;
+
     bool stopped = false;
     std::stack<mt::PAIR<Node*>> loaded;
     loaded.push({this, this});
@@ -164,6 +170,7 @@ namespace xml {
   }
 
   void Node::bubble(mt::CR<CALLBACK> callback) {
+    if (!callback) return;
     Node *current = this;
 
     do {
