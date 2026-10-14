@@ -90,30 +90,37 @@ namespace xml {
     static bool comment_inner_close();
 
     struct Phase {
-      enum TYPE_CODE {
-        TYPE_ZERO, DECLA, TAG,
-        CDATA, COMMENT, INNER_STRING
+      enum CODE {
+        ZERO,
+        // declaration
+        DECLA_OPEN, DECLA_NAME, DECLA_ATT_KEY,
+        DECLA_ATT_VAL, DECLA_CLOSE,
+        // tag
+        TAG_OPEN, TAG_OPEN_NAME, TAG_ATT_KEY,
+        TAG_ATT_VAL, TAG_XOPEN, TAG_CLOSE,
+        TAG_CLOSE_NAME, TAG_XCLOSE,
+        // cdata
+        CDATA_OPEN, CDATA_CONTENT, CDATA_CLOSE,
+        // commnet
+        COMMENT_OPEN, COMMENT_CONTENT, COMMENT_CLOSE
       };
 
-      enum PART_CODE {
-        PART_ZERO, ENTITY_REF,
-        NAME, TEXT,
-        KEY, VALUE
+      inline static constexpr std::string labels[] {
+        "ZERO",
+        // declaration
+        "DECLA_OPEN", "DECLA_NAME", "DECLA_ATT_KEY",
+        "DECLA_ATT_VAL", "DECLA_CLOSE",
+        // tag
+        "TAG_OPEN", "TAG_OPEN_NAME", "TAG_ATT_KEY",
+        "TAG_ATT_VAL", "TAG_XOPEN", "TAG_CLOSE",
+        "TAG_CLOSE_NAME", "TAG_XCLOSE",
+        // cdata
+        "CDATA_OPEN", "CDATA_CONTENT", "CDATA_CLOSE",
+        // commnet
+        "COMMENT_OPEN", "COMMENT_CONTENT", "COMMENT_CLOSE"
       };
 
-      inline static constexpr std::string type_labels[] {
-        "TYPE_ZERO", "DECLA", "TAG",
-        "CDATA", "COMMENT", "INNER_STRING"
-      };
-
-      inline static constexpr std::string part_labels[] {
-        "PART_ZERO", "ENTITY_REF",
-        "NAME", "TEXT",
-        "KEY", "VALUE"
-      };
-
-      inline static TYPE_CODE type = TYPE_ZERO;
-      inline static PART_CODE part = PART_ZERO;
+      inline static CODE status = ZERO;
     };
 
   public:
