@@ -101,9 +101,9 @@ namespace xml {
         // mark
         ANY_MARK, SELECT_MARK, SELECT_EXCLA,
         // cdata
-        CDATA_MARK, CDATA_CONTENT, CDATA_OFF,
+        CDATA_MARK, CDATA_CONTENT,
         // commnet
-        COMMENT_MARK, COMMENT_CONTENT, COMMENT_OFF
+        COMMENT_MARK, COMMENT_CONTENT
       };
 
       inline static constexpr std::string labels[] {
@@ -117,9 +117,9 @@ namespace xml {
         // mark
         "ANY_MARK", "SELECT_MARK", "SELECT_EXCLA",
         // cdata
-        "CDATA_MARK", "CDATA_CONTENT", "CDATA_OFF",
+        "CDATA_MARK", "CDATA_CONTENT",
         // commnet
-        "COMMENT_MARK", "COMMENT_CONTENT", "COMMENT_OFF"
+        "COMMENT_MARK", "COMMENT_CONTENT"
       };
 
       inline static CODE status = ZERO;
