@@ -52,7 +52,7 @@ namespace xml {
     static bool setNextTest(mt::CR<TEST_CALLBACK> cb);
     static bool stopByTest(mt::CR<TEST_CALLBACK> cb);
     static bool checkMultiline(mt::CR_VEC<CHCB> chsCbs);
-    static bool fillText();
+    static bool fill_fext();
 
     static bool fillValue(
       mt::CR_VEC<CHCB> chsCbs,
@@ -71,53 +71,55 @@ namespace xml {
     static bool entity_ref();
     static bool decla_name();
     static bool decla_att_key();
-    static bool decla_att_value();
-    static bool decla_close();
+    static bool decla_att_val();
+    static bool decla_off();
     static bool decla_set();
-    static bool tag_open_name();
+    static bool tag_name();
     static bool tag_att_key();
-    static bool tag_att_value();
-    static bool tag_close();
-    static bool offer_names();
-    static bool xtag_open_name();
-    static bool xtag_no_att_key();
-    static bool xtag_close();
-    static bool any_open();
-    static bool select_open();
-    static bool excla_select();
-    static bool cdata_open();
-    static bool cdata_inner_close();
-    static bool comment_inner_close();
+    static bool tag_att_val();
+    static bool tag_off();
+    static bool tag_over();
+    static bool xtag_name();
+    static bool xtag_noatt_key();
+    static bool xtag_off();
+    static bool any_mark();
+    static bool select_mark();
+    static bool select_excla();
+    static bool cdata_mark();
+    static bool cdata_content();
+    static bool comment_content();
 
     struct Phase {
       enum CODE {
-        ZERO,
+        ZERO, FILL_TEXT,
         // declaration
-        DECLA_OPEN, DECLA_NAME, DECLA_ATT_KEY,
-        DECLA_ATT_VAL, DECLA_CLOSE,
+        DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF, DECLA_SET,
         // tag
-        TAG_OPEN, TAG_OPEN_NAME, TAG_ATT_KEY,
-        TAG_ATT_VAL, TAG_XOPEN, TAG_CLOSE,
-        TAG_CLOSE_NAME, TAG_XCLOSE,
+        TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OFF, TAG_OVER,
+        // xtag
+        XTAG_NAME, XTAG_NOATT_KEY, XTAG_OFF,
+        // mark
+        ANY_MARK, SELECT_MARK, SELECT_EXCLA,
         // cdata
-        CDATA_OPEN, CDATA_CONTENT, CDATA_CLOSE,
+        CDATA_MARK, CDATA_CONTENT, CDATA_OFF,
         // commnet
-        COMMENT_OPEN, COMMENT_CONTENT, COMMENT_CLOSE
+        COMMENT_MARK, COMMENT_CONTENT, COMMENT_OFF
       };
 
       inline static constexpr std::string labels[] {
-        "ZERO",
+        "ZERO", "FILL_TEXT",
         // declaration
-        "DECLA_OPEN", "DECLA_NAME", "DECLA_ATT_KEY",
-        "DECLA_ATT_VAL", "DECLA_CLOSE",
+        "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF", "DECLA_SET",
         // tag
-        "TAG_OPEN", "TAG_OPEN_NAME", "TAG_ATT_KEY",
-        "TAG_ATT_VAL", "TAG_XOPEN", "TAG_CLOSE",
-        "TAG_CLOSE_NAME", "TAG_XCLOSE",
+        "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OFF", "TAG_OVER",
+        // xtag
+        "XTAG_NAME", "XTAG_NOATT_KEY", "XTAG_OFF",
+        // mark
+        "ANY_MARK", "SELECT_MARK", "SELECT_EXCLA",
         // cdata
-        "CDATA_OPEN", "CDATA_CONTENT", "CDATA_CLOSE",
+        "CDATA_MARK", "CDATA_CONTENT", "CDATA_OFF",
         // commnet
-        "COMMENT_OPEN", "COMMENT_CONTENT", "COMMENT_CLOSE"
+        "COMMENT_MARK", "COMMENT_CONTENT", "COMMENT_OFF"
       };
 
       inline static CODE status = ZERO;
