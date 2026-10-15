@@ -204,7 +204,20 @@ namespace xml {
     });
   }
 
-  /** CDATA */
+  /** Derived Classes */
+
+  void Tag::splitNamespaces(mt::CR_CH separator) {
+    if (!name.empty()) {
+      names = {""};
+
+      for (mt::CR_CH ch : name) {
+        if (ch == ':') {
+          names.push_back("");
+        }
+        else names.back() += ch;
+      }
+    }
+  }
 
   void CDATA::init() {
     Node::init();
@@ -216,8 +229,6 @@ namespace xml {
       children() ? children()->stringify() : text
     ) + "]]>";
   }
-
-  /** COMMENT */
 
   void Comment::init() {
     Node::init();

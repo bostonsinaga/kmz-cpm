@@ -71,8 +71,8 @@ namespace xml {
 
     std::string stringify();
     std::string getValue(mt::CR_STR key);
-    std::string getText() { return text; }
-    size_t getDepth() { return depth; }
+    std::string getText() const { return text; }
+    size_t getDepth() const { return depth; }
 
     virtual std::string ostringy();
     virtual std::string cstringy();
@@ -112,6 +112,18 @@ namespace xml {
     void detach();
     void destroy();
     void annihilate(mt::CR<DIRECTION> direction = LEFT);
+  };
+
+  class Tag : public Node {
+  private:
+    bool completed = false;
+
+  public:
+    mt::VEC_STR names;
+
+    bool isCompleted() const { return completed; }
+    void setCompleted() { completed = true; }
+    void splitNamespaces(mt::CR_CH separator = ':');
   };
 
   class CDATA : public Node {
