@@ -13,17 +13,6 @@ namespace xml {
     return topmost;
   }
 
-  std::string Node::uniname() {
-    std::string uname;
-
-    for (mt::CR_STR nm : names) {
-      uname += nm + ':';
-    }
-
-    if (!uname.empty()) uname.pop_back();
-    return uname;
-  }
-
   std::string Node::stringify() {
     std::string ostr, cstr;
 
@@ -50,11 +39,11 @@ namespace xml {
       attstr += ' ' + keyval.first + "=\"" + keyval.second + '"';
     }
 
-    return '<' + uniname() + attstr + (children() ? ">" : "/>");
+    return '<' + name + attstr + (children() ? ">" : "/>");
   }
 
   std::string Node::cstringy() {
-    return children() ? ("</" + uniname() + '>') : "";
+    return children() ? ("</" + name + '>') : "";
   }
 
   void Node::init() {

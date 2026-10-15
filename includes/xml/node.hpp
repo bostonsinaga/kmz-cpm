@@ -52,14 +52,12 @@ namespace xml {
     virtual void init();
 
   public:
-    mt::VEC_STR names {""};
+    std::string name;
     inline static Declaration declaration;
 
     Node() { init(); }
-    Node(mt::CR_STR name_in) : names({name_in}) { init(); }
-    Node(mt::CR_STR name_in, mt::CR_STR text_in) : names({name_in}), text(text_in) { init(); }
-    Node(mt::CR_VEC_STR names_in) : names(names_in) { init(); }
-    Node(mt::CR_VEC_STR names_in, mt::CR_STR text_in) : names(names_in), text(text_in) { init(); }
+    Node(mt::CR_STR name_in) : name(name_in) { init(); }
+    Node(mt::CR_STR name_in, mt::CR_STR text_in) : name(name_in), text(text_in) { init(); }
 
     /** GETTERS */
 
@@ -71,7 +69,6 @@ namespace xml {
 
     Node *root();
 
-    std::string uniname();
     std::string stringify();
     std::string getValue(mt::CR_STR key);
     std::string getText() { return text; }
