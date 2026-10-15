@@ -12,18 +12,7 @@ namespace xml {
     typedef mt::PAIR2<char, TEST_CALLBACK> CHCB;
     inline static std::string::const_iterator _it, _end;
 
-    class Parnode : public Node {
-    private:
-      bool completed = false;
-
-    public:
-      Parnode() : Node() {}
-      Parnode(mt::CR_STR name_in) : Node({name_in}) {}
-      bool isCompleted() const { return completed; }
-      void setCompleted() { completed = true; }
-    };
-
-    inline static Parnode
+    inline static Tag
       *_root = nullptr,
       *_subroot = nullptr,
       *_pointer = nullptr;
@@ -33,8 +22,7 @@ namespace xml {
 
     inline static TEST_CALLBACK _test[] {nullptr, nullptr};
     inline static size_t _point[] {1, 1};
-    inline static mt::PAIR_STR _name_pair;
-    inline static std::string _key, _text;
+    inline static std::string _name, _key, _text;
     inline static std::string *_strptr;
     inline static bool _errorOccurred = false;
 
@@ -64,8 +52,6 @@ namespace xml {
       mt::CR<TEST_CALLBACK> attKeyCb
     );
 
-    static mt::VEC_STR splitNamespaces(mt::CR_STR name);
-
     /** TESTS */
 
     static bool entity_ref();
@@ -91,14 +77,15 @@ namespace xml {
 
     struct Phase {
       enum CODE {
+        // free text
         ZERO, FILL_TEXT,
         // declaration
-        DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF, DECLA_SET,
+        DECLA_MARK, DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
         // tag
         TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OFF, TAG_OVER,
         // xtag
         XTAG_NAME, XTAG_NOATT_KEY, XTAG_OFF,
-        // mark
+        // free mark
         ANY_MARK, SELECT_MARK, SELECT_EXCLA,
         // cdata
         CDATA_MARK, CDATA_CONTENT,
@@ -109,7 +96,7 @@ namespace xml {
       inline static constexpr std::string labels[] {
         "ZERO", "FILL_TEXT",
         // declaration
-        "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF", "DECLA_SET",
+        "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF",
         // tag
         "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OFF", "TAG_OVER",
         // xtag

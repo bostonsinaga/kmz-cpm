@@ -43,7 +43,7 @@ namespace xml {
 
   void Parser::cancelNode() {
     if (_pointer->isCompleted()) {
-      Parnode *container = static_cast<Parnode*>(_pointer->parent());
+      Tag *container = static_cast<Tag*>(_pointer->parent());
 
       while (container) {
         if (container->isCompleted()) {
@@ -51,7 +51,7 @@ namespace xml {
           _pointer->destroy();
 
           if (container->children()) {
-            _pointer = static_cast<Parnode*>(container->children()->prev());
+            _pointer = static_cast<Tag*>(container->children()->prev());
           }
           else _pointer = container;
 
@@ -59,13 +59,13 @@ namespace xml {
         }
         else {
           _pointer = container;
-          container = static_cast<Parnode*>(container->parent());
+          container = static_cast<Tag*>(container->parent());
         }
       }
     }
     else {
       if (_pointer->alone()) {
-        Parnode *container = static_cast<Parnode*>(_pointer->parent());
+        Tag *container = static_cast<Tag*>(_pointer->parent());
         _pointer->detach();
         _pointer->destroy();
 
@@ -76,7 +76,7 @@ namespace xml {
         Node *prev = _pointer->prev();
         _pointer->detach();
         _pointer->destroy();
-        _pointer = static_cast<Parnode*>(prev);
+        _pointer = static_cast<Tag*>(prev);
       }
     }
   }
@@ -145,11 +145,15 @@ namespace xml {
     return setError();
   }
 
-  bool Parser::fillText() {
+  bool Parser::fill_fext() {
+    Phase::status = Phase::FILL_TEXT;
+    _text = "";
+
     while (_it != _end) {
       if (*_it == '<') {
         shiftChar();
-        return setNextTest(select_open);
+        _pointer->setText(_text);
+        return setNextTest(select_mark);
       }
       else if (*_it == '&') {
         shiftChar();
@@ -211,6 +215,8 @@ namespace xml {
     mt::CR_VEC<CHCB> chsCbs,
     mt::CR<TEST_CALLBACK> attKeyCb
   ) {
+    *_strptr = "";
+
     if (_it != _end) {
       if (isAlphabet()) {
         bool spaced = false;
@@ -241,19 +247,6 @@ namespace xml {
     }
 
     return setError();
-  }
-
-  mt::VEC_STR Parser::splitNamespaces(mt::CR_STR name) {
-    mt::VEC_STR vec {""};
-
-    for (mt::CR_CH ch : name) {
-      if (ch == ':') {
-        vec.push_back("");
-      }
-      else vec.back() += ch;
-    }
-
-    return vec;
   }
 
   bool Parser::entity_ref() {
@@ -337,25 +330,29 @@ namespace xml {
   /** DECLARATION TESTS */
 
   bool Parser::decla_name() {
-    _strptr = &_name_pair.first;
-    return fillName({{'?', decla_close}}, decla_att_key);
+    _strptr = &_name;
+    Phase::status = Phase::DECLA_NAME;
+    return fillName({{'?', decla_off}}, decla_att_key);
   }
 
   bool Parser::decla_att_key() {
     _strptr = &_key;
-    return fillName({{'=', decla_att_value}}, decla_att_key);
+    Phase::status = Phase::DECLA_ATT_KEY;
+    return fillName({{'=', decla_att_val}}, decla_att_key);
   }
 
-  bool Parser::decla_att_value() {
-    return fillValue({{'?', decla_close}}, decla_att_key);
+  bool Parser::decla_att_val() {
+    Phase::status = Phase::DECLA_ATT_VAL;
+    return fillValue({{'?', decla_off}}, decla_att_key);
   }
 
-  bool Parser::decla_close() {
+  bool Parser::decla_off() {
+    Phase::status = Phase::DECLA_OFF;
     return checkMultiline({{'>', decla_set}});
   }
 
   bool Parser::decla_set() {
-    Node::declaration.type = _name_pair.first;
+    Node::declaration.type = _name;
     Node::declaration.encoding = _pointer->getValue("encoding");
 
     std::string vecstr = _pointer->getValue("version");
@@ -372,15 +369,15 @@ namespace xml {
     Node::declaration.version.minor = mt_uti::Scanner::stringToNumber<int>(minstr);
 
     _pointer->destroy();
-    _pointer = new Parnode();
+    _pointer = new Tag();
 
-    return setNextTest(any_open);
+    return setNextTest(any_mark);
   }
 
   /** OPEN TAG TESTS */
 
-  bool Parser::tag_open_name() {
-    Parnode *newptr = new Parnode();
+  bool Parser::tag_name() {
+    Tag *newptr = new Tag();
 
     if (_pointer->isCompleted()) {      
       _pointer->connect(newptr);
@@ -388,91 +385,104 @@ namespace xml {
     else _pointer->addChild(newptr);
 
     _pointer = newptr;
-    _strptr = &_name_pair.first;
+    _strptr = &_name;
+    Phase::status = Phase::TAG_NAME;
 
     return fillName({
-      {'>', offer_names},
-      {'/', tag_close}
+      {'>', tag_over},
+      {'/', tag_off}
     }, tag_att_key);
   }
 
   bool Parser::tag_att_key() {
     _strptr = &_key;
-    return fillName({{'=', tag_att_value}}, tag_att_key);
+    Phase::status = Phase::TAG_ATT_KEY;
+    return fillName({{'=', tag_att_val}}, tag_att_key);
   }
 
-  bool Parser::tag_att_value() {
+  bool Parser::tag_att_val() {
+    Phase::status = Phase::TAG_ATT_VAL;
+
     return fillValue({{
-      {'>', offer_names},
-      {'/', tag_close}
+      {'>', tag_over},
+      {'/', tag_off}
     }}, tag_att_key);
   }
 
-  bool Parser::tag_close() {
-    return checkMultiline({{'>', offer_names}});
+  bool Parser::tag_off() {
+    Phase::status = Phase::TAG_OFF;
+    return checkMultiline({{'>', tag_over}});
   }
 
-  bool Parser::offer_names() {
+  bool Parser::tag_over() {
+    Phase::status = Phase::TAG_OVER;
+    _pointer->name = _name;
+
     if (*_it == '<') {
       shiftChar();
-      return setNextTest(select_open);
+      return setNextTest(select_mark);
     }
 
-    return setNextTest(fillText);
+    return setNextTest(fill_fext);
   }
 
   /** CLOSE TAG TESTS */
 
-  bool Parser::xtag_open_name() {
+  bool Parser::xtag_name() {
+    Phase::status = Phase::XTAG_NAME;
+
     if (_pointer->isCompleted()) {
-      _pointer = static_cast<Parnode*>(_pointer->parent());
+      _pointer = static_cast<Tag*>(_pointer->parent());
     }
 
-    _strptr = &_name_pair.second;
-    return fillName({{'>', xtag_close}}, xtag_no_att_key);
+    _strptr = &_name;
+    return fillName({{'>', xtag_off}}, xtag_noatt_key);
   }
 
-  bool Parser::xtag_no_att_key() {
+  bool Parser::xtag_noatt_key() {
+    Phase::status = Phase::XTAG_NOATT_KEY;
     return setError();
   }
 
-  bool Parser::xtag_close() {
-    if (_name_pair.first == _name_pair.second) {
-      if (!_text.empty()) {
-        _pointer->setText(_text);
-        _text = "";
-      }
+  bool Parser::xtag_off() {
+    Phase::status = Phase::XTAG_OFF;
 
-      _pointer->names = splitNamespaces(_name_pair.first);
+    if (_pointer->name == _name) {
       _pointer->setCompleted();
-      return setNextTest(any_open);
+      return setNextTest(any_mark);
     }
 
-    return setError();    
+    return setError();
   }
 
   /** SELECTION TESTS */
 
-  bool Parser::any_open() {
-    return checkMultiline({{'<', select_open}});
+  bool Parser::any_mark() {
+    Phase::status = Phase::ANY_MARK;
+    return checkMultiline({{'<', select_mark}});
   }
 
-  bool Parser::select_open() {
+  bool Parser::select_mark() {
     TEST_CALLBACK cb;
+    Phase::status = Phase::SELECT_MARK;
 
     if (_it != _end) {
       if (isAlphabet()) {
-        _name_pair.first += *_it;
-        cb = tag_open_name;
+        _name = *_it;
+        cb = tag_name;
+        Phase::status = Phase::TAG_NAME;
       }
       else if (*_it == '/') {
-        cb = xtag_open_name;
+        cb = xtag_name;
+        Phase::status = Phase::XTAG_NAME;
       }
       else if (*_it == '!') {
-        cb = excla_select;
+        cb = select_excla;
+        Phase::status = Phase::SELECT_EXCLA;
       }
       else if (*_it == '?') {
         cb = decla_name;
+        Phase::status = Phase::DECLA_MARK;
       }
       else return setError();
 
@@ -483,15 +493,17 @@ namespace xml {
     return setError();
   }
 
-  bool Parser::excla_select() {
+  bool Parser::select_excla() {
     if (_it != _end) {
       if (*_it == '-') {
         shiftChar();
-        return setNextTest(comment_inner_close);
+        Phase::status = Phase::COMMENT_MARK;
+        return setNextTest(comment_content);
       }
       else if (*_it == '[') {
         shiftChar();
-        return setNextTest(cdata_open);
+        Phase::status = Phase::CDATA_MARK;
+        return setNextTest(cdata_mark);
       }
     }
 
@@ -500,7 +512,7 @@ namespace xml {
 
   /** CDATA TESTS */
 
-  bool Parser::cdata_open() {
+  bool Parser::cdata_mark() {
     if (_it != _end) {
       if (*_it == 'C') {
         enum alps {_c, _d, _a, _t, a_} phase = _c;
@@ -520,7 +532,7 @@ namespace xml {
           }
           else if (phase == a_ && *_it == '[') {
             shiftChar();
-            return setNextTest(cdata_inner_close);
+            return setNextTest(cdata_content);
           }
           else return setError();
 
@@ -532,11 +544,12 @@ namespace xml {
     return setError();
   }
 
-  bool Parser::cdata_inner_close() {
+  bool Parser::cdata_content() {
     int offSqrCt = 0;
     std::string notOffSqr;
     CDATA *cdata = new CDATA();
     std::string cdtext;
+    Phase::status = Phase::CDATA_CONTENT;
 
     if (_pointer->isCompleted()) _pointer->connect(cdata);
     else _pointer->addChild(cdata);
@@ -557,7 +570,7 @@ namespace xml {
         notOffSqr += *_it;
       }
       else if (offSqrCt == 2 && *_it == '>') {
-        Parnode *mainstream = static_cast<Parnode*>(_pointer);
+        Tag *mainstream = static_cast<Tag*>(_pointer);
         Node *cdnode = Parser::scan(cdtext);
 
         if (_errorOccurred) {
@@ -570,7 +583,7 @@ namespace xml {
         }
 
         shiftChar();
-        return setNextTest(xtag_open_name);
+        return setNextTest(xtag_name);
       }
       else {
         cdtext += notOffSqr;
@@ -586,12 +599,13 @@ namespace xml {
 
   /** COMMENT TEST */
 
-  bool Parser::comment_inner_close() {
+  bool Parser::comment_content() {
     if (_it != _end) {
       if (*_it == '-') {
         int offHypCt = 0;
         std::string notOffHyp, comtext;
         Comment *comment = new Comment();
+        Phase::status = Phase::COMMENT_CONTENT;
 
         if (_pointer->isCompleted()) _pointer->connect(comment);
         else _pointer->addChild(comment);
@@ -614,7 +628,7 @@ namespace xml {
           else if (offHypCt == 2 && *_it == '>') {
             shiftChar();
             comment->setText(comtext);
-            return setNextTest(fillText);
+            return setNextTest(fill_fext);
           }
           else {
             comtext += notOffHyp;
@@ -636,11 +650,11 @@ namespace xml {
     // iterators init
     _it = raw.begin();
     _end = raw.end();
-    _test[MAIN_TEST] = any_open;
+    _test[MAIN_TEST] = any_mark;
 
     // nodes init
-    _root = new Parnode();
-    _subroot = new Parnode();
+    _root = new Tag();
+    _subroot = new Tag();
     _root->addChild(_subroot);
     _pointer = _subroot;
 
@@ -651,7 +665,7 @@ namespace xml {
     if (_subroot && _subroot->children()) {
       Node *original = _subroot->children();
       original->detach();
-      _pointer = static_cast<Parnode*>(original);
+      _pointer = static_cast<Tag*>(original);
     }
     // no nodes detected
     else _pointer = nullptr;
@@ -664,8 +678,7 @@ namespace xml {
   std::string Parser::getErrorMessage() {
     if (_errorOccurred) {
       return (
-        "type: " + Phase::type_labels[Phase::type] + '\n' +
-        "part: " + Phase::part_labels[Phase::part] + '\n'
+        "status: " + Phase::status + '\n'
       );
     }
 
