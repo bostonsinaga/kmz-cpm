@@ -1,7 +1,7 @@
 #ifndef __KMZ_CPM__XML__PARSER_HPP__
 #define __KMZ_CPM__XML__PARSER_HPP__
 
-#include "xml/node.hpp"
+#include "xml/map.hpp"
 
 namespace kmzcpm {
 namespace xml {
@@ -115,7 +115,8 @@ namespace xml {
   public:
     Parser() = delete;
     static Node *scan(mt::CR_STR raw);
-    static std::string getErrorMessage();
+    static std::string getStatusMessage();
+    static bool isError() { return _errorOccurred; }
   };
 }}
 

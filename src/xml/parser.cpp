@@ -135,7 +135,7 @@ namespace xml {
       else return setError();
     }
 
-    // single node as child of _subroot is completed
+    // single node as child of subroot is completed
     if (_pointer->isCompleted() &&
       _pointer->parent() == _subroot
     ) {
@@ -416,7 +416,7 @@ namespace xml {
 
   bool Parser::tag_over() {
     Phase::status = Phase::TAG_OVER;
-    _pointer->name = _name;
+    _pointer->setName(_name);
 
     if (*_it == '<') {
       shiftChar();
@@ -447,7 +447,7 @@ namespace xml {
   bool Parser::xtag_off() {
     Phase::status = Phase::XTAG_OFF;
 
-    if (_pointer->name == _name) {
+    if (_pointer->getName() == _name) {
       _pointer->setCompleted();
       return setNextTest(any_mark);
     }
@@ -675,14 +675,32 @@ namespace xml {
     return static_cast<Node*>(_pointer);
   }
 
-  std::string Parser::getErrorMessage() {
-    if (_errorOccurred) {
-      return (
-        "status: " + Phase::status + '\n'
-      );
+  std::string Parser::getStatusMessage() {
+    std::string represent;
+
+    if (*_it == '\0') represent = "\\0";
+    else if (*_it == ' ') represent = "␣";
+    else if (*_it == '\n') represent = "\\n";
+    else if (*_it == '\r') represent = "\\r";
+    else if (*_it == '\t') represent = "\\t";
+    else if (*_it == '\f') represent = "\\f";
+    else if (*_it == '\v') represent = "\\v";
+
+    std::string openerName = "...", closerName = "...";
+
+    if (_pointer && !_pointer->getName().empty()) {
+      openerName = _pointer->getName();
     }
 
-    return "";
+    if (!_name.empty()) closerName = _name;
+
+    return "STATUS:\n" +
+    std::string("char  : ") + represent + '\n' +
+    "row   : " + std::to_string(_point[ROW]) + '\n' +
+    "col   : " + std::to_string(_point[COL]) + '\n' +
+    "phase : " + Phase::labels[Phase::status] + '\n' +
+    "opener: " + openerName + '\n' +
+    "closer: " + closerName + '\n';
   }
 }}
 
