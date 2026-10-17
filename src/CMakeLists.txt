@@ -1,5 +1,8 @@
 set (SOURCES
   xml/node.cpp
+  xml/derivers.cpp
+  xml/map.cpp
+  xml/parser.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
