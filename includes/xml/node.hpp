@@ -29,7 +29,7 @@ namespace xml {
   };
 
   enum NodeType {
-    BaseType, CDATAType, CommentType
+    BaseType, TagType, CDATAType, CommentType
   };
 
   class Node {
@@ -46,13 +46,12 @@ namespace xml {
 
   protected:
     NodeType type;
-    std::string text;
+    std::string name, text;
 
     ~Node() {}
     virtual void init();
 
   public:
-    std::string name;
     inline static Declaration declaration;
 
     Node() { init(); }
@@ -68,9 +67,11 @@ namespace xml {
     inline bool alone() const { return prev() == this; }
 
     Node *root();
+    NodeType getType() const { return type; }
 
     std::string stringify();
     std::string getValue(mt::CR_STR key);
+    std::string getName() const { return name; }
     std::string getText() const { return text; }
     size_t getDepth() const { return depth; }
 
@@ -83,6 +84,10 @@ namespace xml {
     void setParent(Node *node);
     void addChild(Node *node);
     void cleanChildren();
+
+    virtual void setName(mt::CR_STR newName) {
+      name = newName;
+    }
 
     void setValue(mt::CR_STR key, mt::CR_STR str) {
       attributes[key] = str;
@@ -112,32 +117,6 @@ namespace xml {
     void detach();
     void destroy();
     void annihilate(mt::CR<DIRECTION> direction = LEFT);
-  };
-
-  class Tag : public Node {
-  private:
-    bool completed = false;
-
-  public:
-    mt::VEC_STR names;
-
-    bool isCompleted() const { return completed; }
-    void setCompleted() { completed = true; }
-    void splitNamespaces(mt::CR_CH separator = ':');
-  };
-
-  class CDATA : public Node {
-  private:
-    void init() override;
-    std::string ostringy() override;
-    std::string cstringy() override { return ""; }
-  };
-
-  class Comment : public Node {
-  private:
-    void init() override;
-    std::string ostringy() override;
-    std::string cstringy() override { return ""; }
   };
 }}
 

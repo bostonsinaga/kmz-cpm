@@ -203,41 +203,6 @@ namespace xml {
       return true;
     });
   }
-
-  /** Derived Classes */
-
-  void Tag::splitNamespaces(mt::CR_CH separator) {
-    if (!name.empty()) {
-      names = {""};
-
-      for (mt::CR_CH ch : name) {
-        if (ch == ':') {
-          names.push_back("");
-        }
-        else names.back() += ch;
-      }
-    }
-  }
-
-  void CDATA::init() {
-    Node::init();
-    type = CDATAType;
-  }
-
-  std::string CDATA::ostringy() {
-    return "<![CDATA[" + (
-      children() ? children()->stringify() : text
-    ) + "]]>";
-  }
-
-  void Comment::init() {
-    Node::init();
-    type = CommentType;
-  }
-
-  std::string Comment::ostringy() {
-    return "<!-- " + text + " -->";
-  }
 }}
 
 #endif // __KMZ_CPM__XML__NODE_CPP__
