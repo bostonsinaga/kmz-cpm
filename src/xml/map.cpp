@@ -37,11 +37,7 @@ namespace xml {
   void Map::massreg(Tag *root) {
     if (root) {
       root->traverse(Node::RIGHT, [](Node *current)->bool {
-
-        if (current->getType() == TagType) {
-          mapset[current->getName()].insert(static_cast<Tag*>(current));
-        }
-
+        mapset[current->getName()].insert(static_cast<Tag*>(current));
         return true;
       });
     }
