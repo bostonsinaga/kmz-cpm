@@ -6,32 +6,6 @@
 namespace kmzcpm {
 namespace xml {
 
-  class Node;
-  class CDATA;
-  class Comment;
-
-  struct Declaration {
-    std::string type, encoding;
-
-    struct Version {
-      int major = 0, minor = 0;
-
-      std::string stringify() {
-        return std::to_string(major) + '.' + std::to_string(minor);
-      }
-    } version;
-
-    std::string stringify() {
-      return "<?" + type
-      + "version=\"" + version.stringify() + '"'
-      + "encoding=\"" + encoding + "\"?>";
-    }
-  };
-
-  enum NodeType {
-    BaseType, TagType, CDATAType, CommentType
-  };
-
   class Node {
   public:
     enum COMPASS { NORTH, EAST, SOUTH, WEST };
@@ -41,19 +15,14 @@ namespace xml {
 
   private:
     size_t depth = 0;
-    mt::UNORMAP_STR<std::string> attributes;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
+    void init();
 
   protected:
-    NodeType type;
     std::string name, text;
-
     ~Node() {}
-    virtual void init();
 
   public:
-    inline static Declaration declaration;
-
     Node() { init(); }
     Node(mt::CR_STR name_in) : name(name_in) { init(); }
     Node(mt::CR_STR name_in, mt::CR_STR text_in) : name(name_in), text(text_in) { init(); }
@@ -67,7 +36,6 @@ namespace xml {
     inline bool alone() const { return prev() == this; }
 
     Node *root();
-    NodeType getType() const { return type; }
 
     std::string stringify();
     std::string getValue(mt::CR_STR key);
@@ -75,8 +43,8 @@ namespace xml {
     std::string getText() const { return text; }
     size_t getDepth() const { return depth; }
 
-    virtual std::string ostringy();
-    virtual std::string cstringy();
+    virtual std::string ostringy() { return ""; }
+    virtual std::string cstringy() { return ""; }
 
     /** SETTERS */
 
@@ -87,10 +55,6 @@ namespace xml {
 
     virtual void setName(mt::CR_STR newName) {
       name = newName;
-    }
-
-    void setValue(mt::CR_STR key, mt::CR_STR str) {
-      attributes[key] = str;
     }
 
     void setText(mt::CR_STR str) {

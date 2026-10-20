@@ -25,27 +25,6 @@ namespace xml {
     return ostr + cstr;
   }
 
-  std::string Node::getValue(mt::CR_STR key) {
-    if (attributes.find(key) != attributes.end()) {
-      return attributes[key];
-    }
-    return "";
-  }
-
-  std::string Node::ostringy() {
-    std::string attstr;
-
-    for (mt::CR_PAIR_STR keyval : attributes) {
-      attstr += ' ' + keyval.first + "=\"" + keyval.second + '"';
-    }
-
-    return '<' + name + attstr + (children() ? ">" : "/>");
-  }
-
-  std::string Node::cstringy() {
-    return children() ? ("</" + name + '>') : "";
-  }
-
   void Node::init() {
     if (children()) {
       children()->traverse(RIGHT, [&](Node *current)->bool {
@@ -55,7 +34,6 @@ namespace xml {
     }
 
     depth = 0;
-    type = BaseType;
     quad[WEST] = this;
     quad[EAST] = this;
   }
