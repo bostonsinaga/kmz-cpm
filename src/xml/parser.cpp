@@ -42,16 +42,16 @@ namespace xml {
   }
 
   void Parser::cancelNode() {
-    if (_pointer->isCompleted()) {
-      Tag *container = static_cast<Tag*>(_pointer->parent());
+    if (static_cast<Tag*>(_pointer)->isCompleted()) {
+      Node *container = _pointer->parent();
 
       while (container) {
-        if (container->isCompleted()) {
+        if (static_cast<Tag*>(_pointer)->isCompleted()) {
           _pointer->detach();
           _pointer->destroy();
 
           if (container->children()) {
-            _pointer = static_cast<Tag*>(container->children()->prev());
+            _pointer = container->children()->prev();
           }
           else _pointer = container;
 
@@ -59,13 +59,13 @@ namespace xml {
         }
         else {
           _pointer = container;
-          container = static_cast<Tag*>(container->parent());
+          container = container->parent();
         }
       }
     }
     else {
       if (_pointer->alone()) {
-        Tag *container = static_cast<Tag*>(_pointer->parent());
+        Node *container = _pointer->parent();
         _pointer->detach();
         _pointer->destroy();
 
@@ -136,7 +136,7 @@ namespace xml {
     }
 
     // single node as child of subroot is completed
-    if (_pointer->isCompleted() &&
+    if (static_cast<Tag*>(_pointer)->isCompleted() &&
       _pointer->parent() == _subroot
     ) {
       return false;
@@ -182,7 +182,7 @@ namespace xml {
 
       while (_it != _end) {
         if (*_it == vwrap) {
-          _pointer->setValue(_key, val);
+          static_cast<Tag*>(_pointer)->setValue(_key, val);
           val = "";
           _key = "";
           shiftChar();
@@ -352,25 +352,11 @@ namespace xml {
   }
 
   bool Parser::decla_set() {
-    Node::declaration.type = _name;
-    Node::declaration.encoding = _pointer->getValue("encoding");
+    static_cast<Declaration*>(_pointer)->version.parse(
+      static_cast<Tag*>(_pointer)->getValue("version")
+    );
 
-    std::string vecstr = _pointer->getValue("version");
-    std::string majstr, minstr;
-    bool dotted = false;
-
-    for (mt::CR_CH ch : vecstr) {
-      if (ch == '.') dotted = true;
-      else if (dotted) minstr += ch;
-      else majstr += ch;
-    }
-
-    Node::declaration.version.major = mt_uti::Scanner::stringToNumber<int>(majstr);
-    Node::declaration.version.minor = mt_uti::Scanner::stringToNumber<int>(minstr);
-
-    _pointer->destroy();
-    _pointer = new Tag();
-
+    static_cast<Tag*>(_pointer)->setCompleted();
     return setNextTest(any_mark);
   }
 
@@ -379,7 +365,7 @@ namespace xml {
   bool Parser::tag_name() {
     Tag *newptr = new Tag();
 
-    if (_pointer->isCompleted()) {      
+    if (static_cast<Tag*>(_pointer)->isCompleted()) {      
       _pointer->connect(newptr);
     }
     else _pointer->addChild(newptr);
@@ -431,7 +417,7 @@ namespace xml {
   bool Parser::xtag_name() {
     Phase::status = Phase::XTAG_NAME;
 
-    if (_pointer->isCompleted()) {
+    if (static_cast<Tag*>(_pointer)->isCompleted()) {
       _pointer = static_cast<Tag*>(_pointer->parent());
     }
 
@@ -448,7 +434,7 @@ namespace xml {
     Phase::status = Phase::XTAG_OFF;
 
     if (_pointer->getName() == _name) {
-      _pointer->setCompleted();
+      static_cast<Tag*>(_pointer)->setCompleted();
       return setNextTest(any_mark);
     }
 
@@ -551,7 +537,9 @@ namespace xml {
     std::string cdtext;
     Phase::status = Phase::CDATA_CONTENT;
 
-    if (_pointer->isCompleted()) _pointer->connect(cdata);
+    if (static_cast<Tag*>(_pointer)->isCompleted()) {
+      _pointer->connect(cdata);
+    }
     else _pointer->addChild(cdata);
 
     while (_it != _end) {
@@ -607,7 +595,9 @@ namespace xml {
         Comment *comment = new Comment();
         Phase::status = Phase::COMMENT_CONTENT;
 
-        if (_pointer->isCompleted()) _pointer->connect(comment);
+        if (static_cast<Tag*>(_pointer)->isCompleted()) {
+          _pointer->connect(comment);
+        }
         else _pointer->addChild(comment);
 
         while (_it != _end) {
@@ -665,14 +655,14 @@ namespace xml {
     if (_subroot && _subroot->children()) {
       Node *original = _subroot->children();
       original->detach();
-      _pointer = static_cast<Tag*>(original);
+      _pointer = original;
     }
     // no nodes detected
     else _pointer = nullptr;
 
     // clean and return the product
     _root->destroy();
-    return static_cast<Node*>(_pointer);
+    return _pointer;
   }
 
   std::string Parser::getStatusMessage() {

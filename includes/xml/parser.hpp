@@ -14,8 +14,9 @@ namespace xml {
 
     inline static Tag
       *_root = nullptr,
-      *_subroot = nullptr,
-      *_pointer = nullptr;
+      *_subroot = nullptr;
+
+    inline static Node *_pointer = nullptr;
 
     enum { MAIN_TEST, STOPBY_TEST };
     enum { ROW, COL };
