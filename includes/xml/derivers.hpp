@@ -32,6 +32,14 @@ namespace xml {
 
   class Declaration : public Tag {
   public:
+    Declaration() {
+      init();
+      name = "?DECLA";
+    }
+
+    Declaration(mt::CR_STR) = delete;
+    void setName(mt::CR_STR newName) override {}
+
     struct Version {
       int major = 0, minor = 0;
       std::string stringify();
@@ -46,12 +54,30 @@ namespace xml {
   private:
     std::string ostringy() override;
     std::string cstringy() override { return ""; }
+
+  public:
+    CDATA() {
+      init();
+      name = "!CDATA";
+    }
+
+    CDATA(mt::CR_STR) = delete;
+    void setName(mt::CR_STR newName) override {}
   };
 
   class Comment : public Node {
   private:
     std::string ostringy() override;
     std::string cstringy() override { return ""; }
+
+  public:
+    Comment() {
+      init();
+      name = "!COMMENT";
+    }
+
+    Comment(mt::CR_STR) = delete;
+    void setName(mt::CR_STR newName) override {}
   };
 }}
 
