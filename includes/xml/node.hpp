@@ -16,16 +16,15 @@ namespace xml {
   private:
     size_t depth = 0;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
-    void init();
 
   protected:
     std::string name, text;
+    void init();
     ~Node() {}
 
   public:
     Node() { init(); }
     Node(mt::CR_STR name_in) : name(name_in) { init(); }
-    Node(mt::CR_STR name_in, mt::CR_STR text_in) : name(name_in), text(text_in) { init(); }
 
     /** GETTERS */
 
