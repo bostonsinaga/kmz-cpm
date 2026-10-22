@@ -20,7 +20,7 @@ namespace xml {
   protected:
     std::string name, text;
     void init();
-    ~Node() {}
+    virtual ~Node() {}
 
   public:
     Node() { init(); }
@@ -37,7 +37,6 @@ namespace xml {
     Node *root();
 
     std::string stringify();
-    std::string getValue(mt::CR_STR key);
     std::string getName() const { return name; }
     std::string getText() const { return text; }
     size_t getDepth() const { return depth; }
