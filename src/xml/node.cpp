@@ -17,7 +17,7 @@ namespace xml {
     std::string ostr, cstr;
 
     traverse(RIGHT, [&](Node* current)->bool {
-      ostr += current->ostringy();
+      ostr = current->ostringy() + ostr;
       cstr += current->cstringy();
       return true;
     });
