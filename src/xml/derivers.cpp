@@ -73,8 +73,8 @@ namespace xml {
 
   std::string Declaration::ostringy() {
     return "<?" + attributes["type"]
-    + "version=\"" + version.stringify() + '"'
-    + "encoding=\"" + attributes["encoding"] + "\"?>";
+    + " version=\"" + version.stringify() + '"'
+    + " encoding=\"" + attributes["encoding"] + "\"?>";
   }
 
   /** CDATA */
