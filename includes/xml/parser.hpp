@@ -11,11 +11,6 @@ namespace xml {
     typedef std::function<bool()> TEST_CALLBACK;
     typedef mt::PAIR2<char, TEST_CALLBACK> CHCB;
     inline static std::string::const_iterator _it, _end;
-
-    inline static Tag
-      *_root = nullptr,
-      *_subroot = nullptr;
-
     inline static Node *_pointer = nullptr;
 
     enum { MAIN_TEST, STOPBY_TEST };
@@ -32,7 +27,7 @@ namespace xml {
     static mt::ARR_BOL<256> IS_FORBIDDEN_NAME_CHAR, IS_WHITESPACE_CHAR;
 
     static void shiftChar();
-    static void cancelNode();
+    static void cancelTag();
     static bool trackNewline();
     static bool isAlphabet();
     static bool isSpace();
@@ -114,8 +109,10 @@ namespace xml {
     };
 
   public:
+    inline static Node *ROOT = nullptr;
     Parser() = delete;
-    static Node *scan(mt::CR_STR raw);
+
+    static void scan(mt::CR_STR raw);
     static std::string getStatusMessage();
     static bool isError() { return _errorOccurred; }
   };

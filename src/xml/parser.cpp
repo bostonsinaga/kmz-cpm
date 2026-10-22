@@ -41,25 +41,27 @@ namespace xml {
     _it++;
   }
 
-  void Parser::cancelNode() {
+  void Parser::cancelTag() {
     if (static_cast<Tag*>(_pointer)->isCompleted()) {
-      Node *container = _pointer->parent();
 
-      while (container) {
-        if (static_cast<Tag*>(_pointer)->isCompleted()) {
-          _pointer->detach();
-          _pointer->destroy();
+      Tag *containers[] = { static_cast<Tag*>(_pointer->parent()), nullptr };
+      if (containers[0]) containers[1] = static_cast<Tag*>(containers[0]->parent());
 
-          if (container->children()) {
-            _pointer = container->children()->prev();
+      while (containers[1]) {
+        if (!containers[0]->isCompleted() && containers[1]->isCompleted()) {
+          containers[0]->detach();
+          containers[0]->destroy();
+
+          if (containers[1]->children()) {
+            _pointer = containers[1]->children()->prev();
           }
-          else _pointer = container;
+          else _pointer = containers[1];
 
           break;
         }
         else {
-          _pointer = container;
-          container = container->parent();
+          containers[0] = containers[1];
+          containers[1] = static_cast<Tag*>(containers[1]->parent());
         }
       }
     }
@@ -100,7 +102,12 @@ namespace xml {
 
   bool Parser::setError() {
     _errorOccurred = true;
-    cancelNode();
+
+    // only tag allowed
+    if (Tag* tag = dynamic_cast<Tag*>(_pointer)) {
+      cancelTag();
+    }
+
     return false;
   }
 
@@ -135,9 +142,11 @@ namespace xml {
       else return setError();
     }
 
-    // single node as child of subroot is completed
-    if (static_cast<Tag*>(_pointer)->isCompleted() &&
-      _pointer->parent() == _subroot
+    Tag* tag = dynamic_cast<Tag*>(_pointer);
+
+    // single tag as child of root is completed
+    if (tag && tag->isCompleted() &&
+      tag->parent() == ROOT
     ) {
       return false;
     }
@@ -330,8 +339,10 @@ namespace xml {
   /** DECLARATION TESTS */
 
   bool Parser::decla_name() {
-    _strptr = &_name;
     Phase::status = Phase::DECLA_NAME;
+    _strptr = &_name;
+    _pointer->addChild(new Declaration());
+    _pointer = _pointer->children()->prev();
     return fillName({{'?', decla_off}}, decla_att_key);
   }
 
@@ -352,25 +363,31 @@ namespace xml {
   }
 
   bool Parser::decla_set() {
+
+    // multiple or invalid position of declaration
+    if (_pointer->parent() != ROOT) {
+      return setError();
+    }
+
     static_cast<Declaration*>(_pointer)->version.parse(
       static_cast<Tag*>(_pointer)->getValue("version")
     );
 
-    static_cast<Tag*>(_pointer)->setCompleted();
+    static_cast<Declaration*>(_pointer)->setCompleted();
     return setNextTest(any_mark);
   }
 
   /** OPEN TAG TESTS */
 
   bool Parser::tag_name() {
-    Tag *newptr = new Tag();
+    Tag *tag = new Tag();
 
     if (static_cast<Tag*>(_pointer)->isCompleted()) {      
-      _pointer->connect(newptr);
+      _pointer->connect(tag);
     }
-    else _pointer->addChild(newptr);
+    else _pointer->addChild(tag);
 
-    _pointer = newptr;
+    _pointer = tag;
     _strptr = &_name;
     Phase::status = Phase::TAG_NAME;
 
@@ -558,19 +575,20 @@ namespace xml {
         notOffSqr += *_it;
       }
       else if (offSqrCt == 2 && *_it == '>') {
-        Tag *mainstream = static_cast<Tag*>(_pointer);
-        Node *cdnode = Parser::scan(cdtext);
+        Node *oriRoot = ROOT,
+          *oriPtr = _pointer;
+
+        Parser::scan(cdtext);
 
         if (_errorOccurred) {
           cdata->setText(cdtext);
           _errorOccurred = false;
         }
-        else {
-          cdata->addChild(cdnode);
-          _pointer = mainstream;
-        }
+        else cdata->addChild(ROOT);
 
         shiftChar();
+        ROOT = oriRoot;
+        _pointer = oriPtr;
         return setNextTest(xtag_name);
       }
       else {
@@ -636,33 +654,18 @@ namespace xml {
 
   /** INIT TEST */
 
-  Node *Parser::scan(mt::CR_STR raw) {
+  void Parser::scan(mt::CR_STR raw) {
     // iterators init
     _it = raw.begin();
     _end = raw.end();
     _test[MAIN_TEST] = any_mark;
 
     // nodes init
-    _root = new Tag();
-    _subroot = new Tag();
-    _root->addChild(_subroot);
-    _pointer = _subroot;
+    ROOT = new Node("#ROOT");
+    _pointer = ROOT;
 
     // iterator shifting is in scattered calls
     while (_test[MAIN_TEST]()) {}
-
-    // release product from sentinel roots
-    if (_subroot && _subroot->children()) {
-      Node *original = _subroot->children();
-      original->detach();
-      _pointer = original;
-    }
-    // no nodes detected
-    else _pointer = nullptr;
-
-    // clean and return the product
-    _root->destroy();
-    return _pointer;
   }
 
   std::string Parser::getStatusMessage() {
