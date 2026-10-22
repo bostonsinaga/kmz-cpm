@@ -24,7 +24,7 @@ namespace xml {
     void setCompleted() { completed = true; }
 
     std::string getValue(mt::CR_STR key);
-    void setValue(mt::CR_STR key, mt::CR_STR str);
+    void setValue(mt::CR_STR key, mt::CR_STR val);
 
     std::string ostringy() override;
     std::string cstringy() override;

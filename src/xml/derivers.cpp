@@ -33,8 +33,8 @@ namespace xml {
     return "";
   }
 
-  void Tag::setValue(mt::CR_STR key, mt::CR_STR str) {
-    attributes[key] = str;
+  void Tag::setValue(mt::CR_STR key, mt::CR_STR val) {
+    attributes[key] = val;
   }
 
   std::string Tag::ostringy() {
