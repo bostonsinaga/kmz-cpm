@@ -339,8 +339,8 @@ namespace xml {
   /** DECLARATION TESTS */
 
   bool Parser::decla_name() {
-    Phase::status = Phase::DECLA_NAME;
     _strptr = &_name;
+    Phase::status = Phase::DECLA_NAME;
     _pointer->addChild(new Declaration());
     _pointer = _pointer->children()->prev();
     return fillName({{'?', decla_off}}, decla_att_key);
@@ -349,6 +349,7 @@ namespace xml {
   bool Parser::decla_att_key() {
     _strptr = &_key;
     Phase::status = Phase::DECLA_ATT_KEY;
+    static_cast<Tag*>(_pointer)->setValue("type", _name);
     return fillName({{'=', decla_att_val}}, decla_att_key);
   }
 
