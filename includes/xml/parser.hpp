@@ -28,7 +28,6 @@ namespace xml {
 
     static void shiftChar();
     static void cancelTag();
-    static bool trackNewline();
     static bool isAlphabet();
     static bool isSpace();
     static bool setError();

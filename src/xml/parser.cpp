@@ -25,7 +25,7 @@ namespace xml {
   mt::ARR_BOL<256> Parser::createWhitespaceCharTable() {
     mt::ARR_BOL<256> table {};
 
-    for (mt::CR_UCH ch : {' ', '\r', '\t', '\f', '\v'}) {
+    for (mt::CR_UCH ch : {' ', '\r', '\n', '\t', '\f', '\v'}) {
       table[ch] = true;
     }
 
@@ -37,7 +37,12 @@ namespace xml {
     Parser::IS_WHITESPACE_CHAR = Parser::createWhitespaceCharTable();
 
   void Parser::shiftChar() {
-    if (!trackNewline()) _point[COL]++;
+    if (*_it == '\n') {
+      _point[ROW]++;
+      _point[COL] = 1;
+    }
+    else _point[COL]++;
+
     _it++;
   }
 
@@ -83,21 +88,12 @@ namespace xml {
     }
   }
 
-  bool Parser::trackNewline() {
-    if (*_it == '\n') {
-      _point[ROW]++;
-      _point[COL] = 1;
-      return true;
-    }
-    return false;
-  }
-
   bool Parser::isAlphabet() {
     return mt_uti::StrTool::isAlphabet(*_it) || *_it == '_';
   }
 
   bool Parser::isSpace() {
-    return trackNewline() || IS_WHITESPACE_CHAR[static_cast<mt::UCH>(*_it)];
+    return IS_WHITESPACE_CHAR[static_cast<mt::UCH>(*_it)];
   }
 
   bool Parser::setError() {
@@ -566,10 +562,7 @@ namespace xml {
           offSqrCt++;
           notOffSqr += *_it;
         }
-        else {
-          trackNewline();
-          cdtext += *_it;
-        }
+        else cdtext += *_it;
       }
       else if (offSqrCt == 1 && *_it == ']') {
         offSqrCt++;
@@ -625,10 +618,7 @@ namespace xml {
               offHypCt++;
               notOffHyp += *_it;
             }
-            else {
-              trackNewline();
-              comtext += *_it;
-            }
+            else comtext += *_it;
           }
           else if (offHypCt == 1 && *_it == '-') {
             offHypCt++;
