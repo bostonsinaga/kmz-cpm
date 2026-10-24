@@ -92,6 +92,10 @@ namespace xml {
     return mt_uti::StrTool::isAlphabet(*_it) || *_it == '_';
   }
 
+  bool Parser::isForbiddenName() {
+    return IS_FORBIDDEN_NAME_CHAR[static_cast<mt::UCH>(*_it)];
+  }
+
   bool Parser::isSpace() {
     return IS_WHITESPACE_CHAR[static_cast<mt::UCH>(*_it)];
   }
@@ -119,25 +123,10 @@ namespace xml {
 
   bool Parser::stopByTest(mt::CR<TEST_CALLBACK> cb) {
     _test[STOPBY_TEST] = _test[MAIN_TEST];
-    _test[MAIN_TEST] = cb;
-    return true;
+    return setNextTest(cb);
   }
 
-  bool Parser::checkMultiline(mt::CR_VEC<CHCB> chsCbs) {
-
-    // tolerates the spaces before the first target char detected
-    while (_it != _end) {
-      for (mt::CR<CHCB> chCb : chsCbs) {
-        if (*_it == chCb.first) {
-          shiftChar();
-          return setNextTest(chCb.second);
-        }
-      }
-
-      if (isSpace()) shiftChar();
-      else return setError();
-    }
-
+  bool Parser::endMultiline() {
     Tag* tag = dynamic_cast<Tag*>(_pointer);
 
     // single tag as child of root is completed
@@ -148,6 +137,53 @@ namespace xml {
     }
 
     return setError();
+  }
+
+  bool Parser::charMultiline(mt::CR_VEC<CHCB> chsCbs) {
+    while (_it != _end) {
+
+      // each char and callback pair
+      for (mt::CR<CHCB> chCb : chsCbs) {
+        if (*_it == chCb.first) {
+          shiftChar();
+          return setNextTest(chCb.second);
+        }
+      }
+
+      // ignore space
+      if (isSpace()) shiftChar();
+      // unknown char
+      else return setError();
+    }
+
+    return endMultiline();
+  }
+
+  bool Parser::textMultiline(mt::CR_VEC<CHCB> chsCbs) {
+    while (_it != _end) {
+
+      // each char and callback pair
+      for (mt::CR<CHCB> chCb : chsCbs) {
+        if (*_it == chCb.first) {
+          shiftChar();
+          return setNextTest(chCb.second);
+        }
+      }
+
+      // ignore space
+      if (isSpace()) shiftChar();
+      // entity reference
+      else if (*_it == '&') {
+        shiftChar();
+        _strptr = &_text;
+        _test[STOPBY_TEST] = fill_fext;
+        return setNextTest(entity_ref);
+      }
+      // fill text
+      else return setNextTest(fill_fext);
+    }
+
+    return endMultiline();
   }
 
   bool Parser::fill_fext() {
@@ -187,7 +223,10 @@ namespace xml {
 
       while (_it != _end) {
         if (*_it == vwrap) {
+          // found the value wrapper closer
           static_cast<Tag*>(_pointer)->setValue(_key, val);
+
+          // reinit
           val = "";
           _key = "";
           shiftChar();
@@ -195,6 +234,7 @@ namespace xml {
           while (_it != _end) {
             if (isSpace()) shiftChar();
             else {
+              // each char and callback pair
               for (mt::CR<CHCB> chCb : chsCbs) {
                 if (*_it == chCb.first) {
                   shiftChar();
@@ -202,7 +242,9 @@ namespace xml {
                 }
               }
 
+              // space for key
               if (isAlphabet()) return setNextTest(attKeyCb);
+              // forbidden char for name
               return setError();
             }
           }
@@ -222,32 +264,28 @@ namespace xml {
   ) {
     *_strptr = "";
 
-    if (_it != _end) {
-      if (isAlphabet()) {
-        bool spaced = false;
+    if (_it != _end && isAlphabet()) {
+      bool spaced = false;
 
-        while (_it != _end) {
-          if (isSpace()) spaced = true;
-          else {
-            for (mt::CR<CHCB> chCb : chsCbs) {
-              if (*_it == chCb.first) {
-                shiftChar();
-                return setNextTest(chCb.second);
-              }
-            }
-
-            if (IS_FORBIDDEN_NAME_CHAR[static_cast<mt::UCH>(*_it)]) break;
-            else if (spaced) {
-              _key += *_it;
+      while (_it != _end) {
+        if (isSpace()) spaced = true;
+        else {
+          for (mt::CR<CHCB> chCb : chsCbs) {
+            if (*_it == chCb.first) {
               shiftChar();
-              return setNextTest(attKeyCb);
+              return setNextTest(chCb.second);
             }
-
-            *_strptr += *_it;
           }
 
-          shiftChar();
+          if (isForbiddenName()) break;
+          else if (spaced) {
+            return setNextTest(attKeyCb);
+          }
+
+          *_strptr += *_it;
         }
+
+        shiftChar();
       }
     }
 
@@ -356,7 +394,7 @@ namespace xml {
 
   bool Parser::decla_off() {
     Phase::status = Phase::DECLA_OFF;
-    return checkMultiline({{'>', decla_set}});
+    return charMultiline({{'>', decla_set}});
   }
 
   bool Parser::decla_set() {
@@ -389,8 +427,8 @@ namespace xml {
     Phase::status = Phase::TAG_NAME;
 
     return fillName({
-      {'>', tag_over},
-      {'/', tag_off}
+      {'>', tag_off},
+      {'/', tag_over}
     }, tag_att_key);
   }
 
@@ -404,26 +442,25 @@ namespace xml {
     Phase::status = Phase::TAG_ATT_VAL;
 
     return fillValue({{
-      {'>', tag_over},
-      {'/', tag_off}
+      {'>', tag_off},
+      {'/', tag_over}
     }}, tag_att_key);
-  }
-
-  bool Parser::tag_off() {
-    Phase::status = Phase::TAG_OFF;
-    return checkMultiline({{'>', tag_over}});
   }
 
   bool Parser::tag_over() {
     Phase::status = Phase::TAG_OVER;
     _pointer->setName(_name);
 
-    if (*_it == '<') {
-      shiftChar();
-      return setNextTest(select_mark);
-    }
+    return charMultiline({{'>', []()->bool {
+      static_cast<Tag*>(_pointer)->setCompleted();
+      return setNextTest(any_mark);
+    }}});
+  }
 
-    return setNextTest(fill_fext);
+  bool Parser::tag_off() {
+    Phase::status = Phase::TAG_OFF;
+    _pointer->setName(_name);
+    return textMultiline({{'<', select_mark}});
   }
 
   /** CLOSE TAG TESTS */
@@ -459,35 +496,32 @@ namespace xml {
 
   bool Parser::any_mark() {
     Phase::status = Phase::ANY_MARK;
-    return checkMultiline({{'<', select_mark}});
+    return charMultiline({{'<', select_mark}});
   }
 
   bool Parser::select_mark() {
-    TEST_CALLBACK cb;
     Phase::status = Phase::SELECT_MARK;
 
     if (_it != _end) {
       if (isAlphabet()) {
-        _name = *_it;
-        cb = tag_name;
         Phase::status = Phase::TAG_NAME;
+        return setNextTest(tag_name);
       }
       else if (*_it == '/') {
-        cb = xtag_name;
+        shiftChar();
         Phase::status = Phase::XTAG_NAME;
+        return setNextTest(xtag_name);
       }
       else if (*_it == '!') {
-        cb = select_excla;
+        shiftChar();
         Phase::status = Phase::SELECT_EXCLA;
+        return setNextTest(select_excla);
       }
       else if (*_it == '?') {
-        cb = decla_name;
+        shiftChar();
         Phase::status = Phase::DECLA_MARK;
+        return setNextTest(decla_name);
       }
-      else return setError();
-
-      shiftChar();
-      return setNextTest(cb);
     }
 
     return setError();
@@ -663,12 +697,13 @@ namespace xml {
     std::string represent;
 
     if (*_it == '\0') represent = "\\0";
-    else if (*_it == ' ') represent = "␣";
+    else if (*_it == ' ') represent = "\\s";
     else if (*_it == '\n') represent = "\\n";
     else if (*_it == '\r') represent = "\\r";
     else if (*_it == '\t') represent = "\\t";
     else if (*_it == '\f') represent = "\\f";
     else if (*_it == '\v') represent = "\\v";
+    else represent = *_it;
 
     std::string openerName = "...", closerName = "...";
 
@@ -678,13 +713,14 @@ namespace xml {
 
     if (!_name.empty()) closerName = _name;
 
-    return "STATUS:\n" +
-    std::string("char  : ") + represent + '\n' +
-    "row   : " + std::to_string(_point[ROW]) + '\n' +
-    "col   : " + std::to_string(_point[COL]) + '\n' +
-    "phase : " + Phase::labels[Phase::status] + '\n' +
-    "opener: " + openerName + '\n' +
-    "closer: " + closerName + '\n';
+    return ( // no title
+      std::string("char  : ") + represent + '\n' +
+      "row   : " + std::to_string(_point[ROW]) + '\n' +
+      "col   : " + std::to_string(_point[COL]) + '\n' +
+      "phase : " + Phase::labels[Phase::status] + '\n' +
+      "opener: " + openerName + '\n' +
+      "closer: " + closerName + '\n'
+    );
   }
 }}
 

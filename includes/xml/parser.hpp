@@ -29,12 +29,15 @@ namespace xml {
     static void shiftChar();
     static void cancelTag();
     static bool isAlphabet();
+    static bool isForbiddenName();
     static bool isSpace();
     static bool setError();
     static bool continueTest();
     static bool setNextTest(mt::CR<TEST_CALLBACK> cb);
     static bool stopByTest(mt::CR<TEST_CALLBACK> cb);
-    static bool checkMultiline(mt::CR_VEC<CHCB> chsCbs);
+    static bool endMultiline();
+    static bool charMultiline(mt::CR_VEC<CHCB> chsCbs);
+    static bool textMultiline(mt::CR_VEC<CHCB> chsCbs);
     static bool fill_fext();
 
     static bool fillValue(
@@ -58,8 +61,8 @@ namespace xml {
     static bool tag_name();
     static bool tag_att_key();
     static bool tag_att_val();
-    static bool tag_off();
     static bool tag_over();
+    static bool tag_off();
     static bool xtag_name();
     static bool xtag_noatt_key();
     static bool xtag_off();
@@ -77,7 +80,7 @@ namespace xml {
         // declaration
         DECLA_MARK, DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
         // tag
-        TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OFF, TAG_OVER,
+        TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OVER, TAG_OFF,
         // xtag
         XTAG_NAME, XTAG_NOATT_KEY, XTAG_OFF,
         // free mark
