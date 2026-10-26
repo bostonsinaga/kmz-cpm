@@ -12,16 +12,12 @@ namespace xml {
 
   private:
     mt::VEC_STR namespaces;
-    bool completed = false;
     void splitNamespaces();
 
   public:
     void setName(mt::CR_STR newName) override;
     size_t numofNamespaces() const { return namespaces.size(); }
     mt::VEC_STR getNamespaces() const { return namespaces; }
-
-    bool isCompleted() const { return completed; }
-    void setCompleted() { completed = true; }
 
     std::string getValue(mt::CR_STR key);
     void setValue(mt::CR_STR key, mt::CR_STR val);

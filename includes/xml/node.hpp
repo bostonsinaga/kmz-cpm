@@ -15,6 +15,7 @@ namespace xml {
 
   private:
     size_t depth = 0;
+    bool completed = false;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
 
   protected:
@@ -33,6 +34,9 @@ namespace xml {
     inline Node *parent() const { return quad[NORTH]; }
     inline Node *children() const { return quad[SOUTH]; }
     inline bool alone() const { return prev() == this; }
+
+    bool isCompleted() const { return completed; }
+    void setCompleted() { completed = true; }
 
     Node *root();
 
