@@ -10,15 +10,15 @@ namespace xml {
     return mapset.find(key) != mapset.end();
   }
 
-  bool Map::has(mt::CR_STR key, Tag *tag) {
+  bool Map::has(mt::CR_STR key, Node *node) {
     if (has(key)) {
-      return mapset[key].find(tag) != mapset[key].end();
+      return mapset[key].find(node) != mapset[key].end();
     }
     return false;
   }
 
-  bool Map::xhas(mt::CR_STR key, Tag *tag) {
-    return mapset[key].find(tag) != mapset[key].end();
+  bool Map::xhas(mt::CR_STR key, Node *node) {
+    return mapset[key].find(node) != mapset[key].end();
   }
 
   bool Map::empty() {
@@ -34,10 +34,10 @@ namespace xml {
     return mapset[key].empty();
   }
 
-  void Map::massreg(Tag *root) {
+  void Map::massreg(Node *root) {
     if (root) {
       root->traverse(Node::RIGHT, [](Node *current)->bool {
-        mapset[current->getName()].insert(static_cast<Tag*>(current));
+        mapset[current->getName()].insert(current);
         return true;
       });
     }
@@ -47,24 +47,24 @@ namespace xml {
     mapset[key] = {};
   }
 
-  void Map::reg(mt::CR_STR key, Tag *tag) {
-    if (has(key)) mapset[key].insert(tag);
+  void Map::reg(mt::CR_STR key, Node *node) {
+    if (has(key)) mapset[key].insert(node);
   }
 
-  void Map::xreg(mt::CR_STR key, Tag *tag) {
-    mapset[key].insert(tag);
+  void Map::xreg(mt::CR_STR key, Node *node) {
+    mapset[key].insert(node);
   }
 
   void Map::unreg(mt::CR_STR key) {
     mapset.erase(key);
   }
 
-  void Map::unreg(mt::CR_STR key, Tag *tag) {
-    if (has(key)) mapset[key].erase(tag);
+  void Map::unreg(mt::CR_STR key, Node *node) {
+    if (has(key)) mapset[key].erase(node);
   }
 
-  void Map::xunreg(mt::CR_STR key, Tag *tag) {
-    mapset[key].erase(tag);
+  void Map::xunreg(mt::CR_STR key, Node *node) {
+    mapset[key].erase(node);
   }
 
   size_t Map::numof() {
@@ -83,8 +83,8 @@ namespace xml {
   size_t Map::total() {
     size_t ct = 0;
 
-    for (const auto& [key, tag] : mapset) {
-      ct += tag.size();
+    for (const auto& [key, node] : mapset) {
+      ct += node.size();
     }
 
     return ct;
