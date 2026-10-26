@@ -27,7 +27,6 @@ namespace xml {
     static mt::ARR_BOL<256> IS_FORBIDDEN_NAME_CHAR, IS_WHITESPACE_CHAR;
 
     static void shiftChar();
-    static void cancelTag();
     static bool isAlphabet();
     static bool isForbiddenName();
     static bool isSpace();

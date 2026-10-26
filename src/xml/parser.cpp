@@ -46,48 +46,6 @@ namespace xml {
     _it++;
   }
 
-  void Parser::cancelTag() {
-    if (static_cast<Tag*>(_pointer)->isCompleted()) {
-
-      Tag *containers[] = { static_cast<Tag*>(_pointer->parent()), nullptr };
-      if (containers[0]) containers[1] = static_cast<Tag*>(containers[0]->parent());
-
-      while (containers[1]) {
-        if (!containers[0]->isCompleted() && containers[1]->isCompleted()) {
-          containers[0]->detach();
-          containers[0]->destroy();
-
-          if (containers[1]->children()) {
-            _pointer = containers[1]->children()->prev();
-          }
-          else _pointer = containers[1];
-
-          break;
-        }
-        else {
-          containers[0] = containers[1];
-          containers[1] = static_cast<Tag*>(containers[1]->parent());
-        }
-      }
-    }
-    else {
-      if (_pointer->alone()) {
-        Node *container = _pointer->parent();
-        _pointer->detach();
-        _pointer->destroy();
-
-        if (container) _pointer = container;
-        else _pointer = nullptr;
-      }
-      else {
-        Node *prev = _pointer->prev();
-        _pointer->detach();
-        _pointer->destroy();
-        _pointer = static_cast<Tag*>(prev);
-      }
-    }
-  }
-
   bool Parser::isAlphabet() {
     return mt_uti::StrTool::isAlphabet(*_it) || *_it == '_';
   }
@@ -102,12 +60,6 @@ namespace xml {
 
   bool Parser::setError() {
     _errorOccurred = true;
-
-    // only tag allowed
-    if (Tag* tag = dynamic_cast<Tag*>(_pointer)) {
-      cancelTag();
-    }
-
     return false;
   }
 
@@ -127,11 +79,10 @@ namespace xml {
   }
 
   bool Parser::endMultiline() {
-    Tag* tag = dynamic_cast<Tag*>(_pointer);
 
-    // single tag as child of root is completed
-    if (tag && tag->isCompleted() &&
-      tag->parent() == ROOT
+    // single node as child of root is completed
+    if (_pointer && _pointer->isCompleted() &&
+      _pointer->parent() == ROOT
     ) {
       return false;
     }
@@ -142,7 +93,7 @@ namespace xml {
   bool Parser::charMultiline(mt::CR_VEC<CHCB> chsCbs) {
     while (_it != _end) {
 
-      // each char and callback pair
+      // each character and callback pair
       for (mt::CR<CHCB> chCb : chsCbs) {
         if (*_it == chCb.first) {
           shiftChar();
@@ -152,7 +103,7 @@ namespace xml {
 
       // ignore space
       if (isSpace()) shiftChar();
-      // unknown char
+      // unknown character
       else return setError();
     }
 
@@ -162,7 +113,7 @@ namespace xml {
   bool Parser::textMultiline(mt::CR_VEC<CHCB> chsCbs) {
     while (_it != _end) {
 
-      // each char and callback pair
+      // each character and callback pair
       for (mt::CR<CHCB> chCb : chsCbs) {
         if (*_it == chCb.first) {
           shiftChar();
@@ -234,7 +185,7 @@ namespace xml {
           while (_it != _end) {
             if (isSpace()) shiftChar();
             else {
-              // each char and callback pair
+              // each character and callback pair
               for (mt::CR<CHCB> chCb : chsCbs) {
                 if (*_it == chCb.first) {
                   shiftChar();
@@ -244,7 +195,7 @@ namespace xml {
 
               // space for key
               if (isAlphabet()) return setNextTest(attKeyCb);
-              // forbidden char for name
+              // forbidden character for name
               return setError();
             }
           }
@@ -408,7 +359,7 @@ namespace xml {
       static_cast<Tag*>(_pointer)->getValue("version")
     );
 
-    static_cast<Declaration*>(_pointer)->setCompleted();
+    _pointer->setCompleted();
     return setNextTest(any_mark);
   }
 
@@ -417,7 +368,7 @@ namespace xml {
   bool Parser::tag_name() {
     Tag *tag = new Tag();
 
-    if (static_cast<Tag*>(_pointer)->isCompleted()) {      
+    if (_pointer->isCompleted()) {      
       _pointer->connect(tag);
     }
     else _pointer->addChild(tag);
@@ -452,7 +403,7 @@ namespace xml {
     _pointer->setName(_name);
 
     return charMultiline({{'>', []()->bool {
-      static_cast<Tag*>(_pointer)->setCompleted();
+      _pointer->setCompleted();
       return setNextTest(any_mark);
     }}});
   }
@@ -468,8 +419,8 @@ namespace xml {
   bool Parser::xtag_name() {
     Phase::status = Phase::XTAG_NAME;
 
-    if (static_cast<Tag*>(_pointer)->isCompleted()) {
-      _pointer = static_cast<Tag*>(_pointer->parent());
+    if (_pointer->isCompleted()) {
+      _pointer = _pointer->parent();
     }
 
     _strptr = &_name;
@@ -485,7 +436,7 @@ namespace xml {
     Phase::status = Phase::XTAG_OFF;
 
     if (_pointer->getName() == _name) {
-      static_cast<Tag*>(_pointer)->setCompleted();
+      _pointer->setCompleted();
       return setNextTest(any_mark);
     }
 
@@ -550,6 +501,7 @@ namespace xml {
     if (_it != _end) {
       if (*_it == 'C') {
         enum alps {_c, _d, _a, _t, a_} phase = _c;
+        shiftChar();
 
         while (_it != _end) {
           if (phase == _c && *_it == 'D') {
@@ -585,7 +537,7 @@ namespace xml {
     std::string cdtext;
     Phase::status = Phase::CDATA_CONTENT;
 
-    if (static_cast<Tag*>(_pointer)->isCompleted()) {
+    if (_pointer->isCompleted()) {
       _pointer->connect(cdata);
     }
     else _pointer->addChild(cdata);
@@ -617,6 +569,7 @@ namespace xml {
         shiftChar();
         ROOT = oriRoot;
         _pointer = oriPtr;
+        _pointer->setCompleted();
         return setNextTest(xtag_name);
       }
       else {
@@ -641,7 +594,7 @@ namespace xml {
         Comment *comment = new Comment();
         Phase::status = Phase::COMMENT_CONTENT;
 
-        if (static_cast<Tag*>(_pointer)->isCompleted()) {
+        if (_pointer->isCompleted()) {
           _pointer->connect(comment);
         }
         else _pointer->addChild(comment);
@@ -696,6 +649,7 @@ namespace xml {
   std::string Parser::getStatusMessage() {
     std::string represent;
 
+    // whitespace character representation
     if (*_it == '\0') represent = "\\0";
     else if (*_it == ' ') represent = "\\s";
     else if (*_it == '\n') represent = "\\n";
@@ -707,11 +661,15 @@ namespace xml {
 
     std::string openerName = "...", closerName = "...";
 
-    if (_pointer && !_pointer->getName().empty()) {
-      openerName = _pointer->getName();
+    // opener name on display
+    if (_pointer) {
+      if (_pointer->getName().empty()) openerName = "#EMPTY";
+      else openerName = _pointer->getName();
     }
 
-    if (!_name.empty()) closerName = _name;
+    // closer name on display
+    if (_name.empty()) closerName = "#EMPTY";
+    else closerName = _name;
 
     return ( // no title
       std::string("char  : ") + represent + '\n' +
