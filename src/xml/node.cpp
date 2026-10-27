@@ -45,20 +45,17 @@ namespace xml {
       tail->quad[EAST] = this;
       prev()->quad[EAST] = node;
       quad[WEST] = tail;
-      node->quad[NORTH] = quad[NORTH];
-      node->depth = depth;
+
+      node->forEach(RIGHT, [&](Node *current)->bool {
+        current->quad[NORTH] = quad[NORTH];
+        current->depth = depth;
+        return true;
+      });
     }
   }
 
   void Node::setParent(Node *node) {
-    if (node) {
-      node->addChild(this);
-
-      forEach(RIGHT, [&](Node *current)->bool {
-        current->quad[NORTH] = node;
-        return true;
-      });
-    }
+    if (node) node->addChild(this);
   }
 
   void Node::addChild(Node *node) {
@@ -66,8 +63,12 @@ namespace xml {
       if (children()) children()->connect(node);
       else {
         quad[SOUTH] = node;
-        node->quad[NORTH] = this;
-        node->depth = depth + 1;
+
+        node->forEach(RIGHT, [&](Node *current)->bool {
+          current->quad[NORTH] = this;
+          current->depth = depth + 1;
+          return true;
+        });
       }
     }
   }
