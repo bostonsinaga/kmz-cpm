@@ -36,53 +36,80 @@ namespace xml {
     Parser::IS_FORBIDDEN_NAME_CHAR = Parser::createForbiddenNameCharTable(),
     Parser::IS_WHITESPACE_CHAR = Parser::createWhitespaceCharTable();
 
-  void Parser::shiftChar() {
-    if (*_it == '\n') {
-      _point[ROW]++;
-      _point[COL] = 1;
-    }
-    else _point[COL]++;
+  void Parser::Member::init(mt::CR_STR raw) {
+    it = raw.begin();
+    end = raw.end();
+    name = "";
+    key = "";
+    text = "";
+    strptr = nullptr;
+    point[ROW] = 0;
+    point[COL] = 0;
+    errorOccurred = false;
+    test[MAIN_TEST] = any_mark;
+    test[STOPBY_TEST] = nullptr;
+    status = Phase::ZERO;
+  }
 
-    _it++;
+  void Parser::Member::create(mt::CR_STR raw) {
+    init(raw);
+    root = new Node("$ROOT");
+    root->setCompleted();
+    pointer = root;
+  }
+
+  void Parser::Member::refresh(mt::CR_STR raw) {
+    init(raw);
+    pointer = root->children() ? root->children()->prev() : root;
+  }
+
+  void Parser::shiftChar() {
+    if (*_mem.it == '\n') {
+      _mem.point[ROW]++;
+      _mem.point[COL] = 1;
+    }
+    else _mem.point[COL]++;
+
+    _mem.it++;
   }
 
   bool Parser::isAlphabet() {
-    return mt_uti::StrTool::isAlphabet(*_it) || *_it == '_';
+    return mt_uti::StrTool::isAlphabet(*_mem.it) || *_mem.it == '_';
   }
 
   bool Parser::isForbiddenName() {
-    return IS_FORBIDDEN_NAME_CHAR[static_cast<mt::UCH>(*_it)];
+    return IS_FORBIDDEN_NAME_CHAR[static_cast<mt::UCH>(*_mem.it)];
   }
 
   bool Parser::isSpace() {
-    return IS_WHITESPACE_CHAR[static_cast<mt::UCH>(*_it)];
+    return IS_WHITESPACE_CHAR[static_cast<mt::UCH>(*_mem.it)];
   }
 
   bool Parser::setError() {
-    _errorOccurred = true;
+    _mem.errorOccurred = true;
     return false;
   }
 
   bool Parser::continueTest() {
-    _test[MAIN_TEST] = _test[STOPBY_TEST];
+    _mem.test[MAIN_TEST] = _mem.test[STOPBY_TEST];
     return true;
   }
 
   bool Parser::setNextTest(mt::CR<TEST_CALLBACK> cb) {
-    _test[MAIN_TEST] = cb;
+    _mem.test[MAIN_TEST] = cb;
     return true;
   }
 
   bool Parser::stopByTest(mt::CR<TEST_CALLBACK> cb) {
-    _test[STOPBY_TEST] = _test[MAIN_TEST];
+    _mem.test[STOPBY_TEST] = _mem.test[MAIN_TEST];
     return setNextTest(cb);
   }
 
   bool Parser::endMultiline() {
 
     // single node as child of root is completed
-    if (_pointer && _pointer->isCompleted() &&
-      _pointer->parent() == ROOT
+    if (_mem.pointer && _mem.pointer->isCompleted() &&
+      _mem.pointer->parent() == _mem.root
     ) {
       return false;
     }
@@ -91,11 +118,11 @@ namespace xml {
   }
 
   bool Parser::charMultiline(mt::CR_VEC<CHCB> chsCbs) {
-    while (_it != _end) {
+    while (_mem.it != _mem.end) {
 
       // each character and callback pair
       for (mt::CR<CHCB> chCb : chsCbs) {
-        if (*_it == chCb.first) {
+        if (*_mem.it == chCb.first) {
           shiftChar();
           return setNextTest(chCb.second);
         }
@@ -111,11 +138,11 @@ namespace xml {
   }
 
   bool Parser::textMultiline(mt::CR_VEC<CHCB> chsCbs) {
-    while (_it != _end) {
+    while (_mem.it != _mem.end) {
 
       // each character and callback pair
       for (mt::CR<CHCB> chCb : chsCbs) {
-        if (*_it == chCb.first) {
+        if (*_mem.it == chCb.first) {
           shiftChar();
           return setNextTest(chCb.second);
         }
@@ -124,10 +151,10 @@ namespace xml {
       // ignore space
       if (isSpace()) shiftChar();
       // entity reference
-      else if (*_it == '&') {
+      else if (*_mem.it == '&') {
         shiftChar();
-        _strptr = &_text;
-        _test[STOPBY_TEST] = fill_fext;
+        _mem.strptr = &_mem.text;
+        _mem.test[STOPBY_TEST] = fill_fext;
         return setNextTest(entity_ref);
       }
       // fill text
@@ -138,23 +165,23 @@ namespace xml {
   }
 
   bool Parser::fill_fext() {
-    Phase::status = Phase::FILL_TEXT;
-    _text = "";
+    _mem.status = Phase::FILL_TEXT;
+    _mem.text = "";
 
-    while (_it != _end) {
-      if (*_it == '<') {
+    while (_mem.it != _mem.end) {
+      if (*_mem.it == '<') {
         shiftChar();
-        _pointer->setText(_text);
+        _mem.pointer->setText(_mem.text);
         return setNextTest(select_mark);
       }
-      else if (*_it == '&') {
+      else if (*_mem.it == '&') {
         shiftChar();
-        _strptr = &_text;
+        _mem.strptr = &_mem.text;
         return stopByTest(entity_ref);
       }
-      else if (*_it == '>') return setError();
+      else if (*_mem.it == '>') return setError();
 
-      _text += *_it;
+      _mem.text += *_mem.it;
       shiftChar();
     }
 
@@ -165,29 +192,29 @@ namespace xml {
     mt::CR_VEC<CHCB> chsCbs,
     mt::CR<TEST_CALLBACK> attKeyCb
   ) {
-    if (_it != _end) {
+    if (_mem.it != _mem.end) {
       std::string val;
       char vwrap = '\0';
 
-      if (*_it == '"' || *_it == '\'') vwrap = *_it;
+      if (*_mem.it == '"' || *_mem.it == '\'') vwrap = *_mem.it;
       shiftChar();
 
-      while (_it != _end) {
-        if (*_it == vwrap) {
+      while (_mem.it != _mem.end) {
+        if (*_mem.it == vwrap) {
           // found the value wrapper closer
-          static_cast<Tag*>(_pointer)->setValue(_key, val);
+          static_cast<Tag*>(_mem.pointer)->setValue(_mem.key, val);
 
           // reinit
           val = "";
-          _key = "";
+          _mem.key = "";
           shiftChar();
 
-          while (_it != _end) {
+          while (_mem.it != _mem.end) {
             if (isSpace()) shiftChar();
             else {
               // each character and callback pair
               for (mt::CR<CHCB> chCb : chsCbs) {
-                if (*_it == chCb.first) {
+                if (*_mem.it == chCb.first) {
                   shiftChar();
                   return setNextTest(chCb.second);
                 }
@@ -201,7 +228,7 @@ namespace xml {
           }
         }
 
-        val += *_it;
+        val += *_mem.it;
         shiftChar();
       }
     }
@@ -213,16 +240,16 @@ namespace xml {
     mt::CR_VEC<CHCB> chsCbs,
     mt::CR<TEST_CALLBACK> attKeyCb
   ) {
-    *_strptr = "";
+    *_mem.strptr = "";
 
-    if (_it != _end && isAlphabet()) {
+    if (_mem.it != _mem.end && isAlphabet()) {
       bool spaced = false;
 
-      while (_it != _end) {
+      while (_mem.it != _mem.end) {
         if (isSpace()) spaced = true;
         else {
           for (mt::CR<CHCB> chCb : chsCbs) {
-            if (*_it == chCb.first) {
+            if (*_mem.it == chCb.first) {
               shiftChar();
               return setNextTest(chCb.second);
             }
@@ -233,7 +260,7 @@ namespace xml {
             return setNextTest(attKeyCb);
           }
 
-          *_strptr += *_it;
+          *_mem.strptr += *_mem.it;
         }
 
         shiftChar();
@@ -249,32 +276,32 @@ namespace xml {
     std::function<void(mt::CR_CH)> onSemicolon = [&](mt::CR_CH oriCh) {
       shiftChar();
 
-      if (*_it == ';') {
-        *_strptr += oriCh;
+      if (*_mem.it == ';') {
+        *_mem.strptr += oriCh;
         detected = true;
       }
     };
 
-    switch (*_it) {
+    switch (*_mem.it) {
       case 'a': { // amp or apos
         shiftChar();
 
-        switch (*_it) {
+        switch (*_mem.it) {
           case 'm': { // amp
             shiftChar();
 
-            switch (*_it) {
+            switch (*_mem.it) {
               case 'p': onSemicolon('&'); break;
             }
           } break;
           case 'p': { // apos
             shiftChar();
 
-            switch (*_it) {
+            switch (*_mem.it) {
               case 'o': {
                 shiftChar();
 
-                switch (*_it) {
+                switch (*_mem.it) {
                   case 's': onSemicolon('\''); break;
                 }
               } break;
@@ -285,29 +312,29 @@ namespace xml {
       case 'g': { // gt
         shiftChar();
 
-        switch (*_it) {
+        switch (*_mem.it) {
           case 't': onSemicolon('>'); break;
         }
       } break;
       case 'l': { // lt
         shiftChar();
 
-        switch (*_it) {
+        switch (*_mem.it) {
           case 't': onSemicolon('<'); break;
         }
       } break;
       case 'q': { // quot
         shiftChar();
 
-        switch (*_it) {
+        switch (*_mem.it) {
           case 'u': {
             shiftChar();
 
-            switch (*_it) {
+            switch (*_mem.it) {
               case 'o': {
                 shiftChar();
 
-                switch (*_it) {
+                switch (*_mem.it) {
                   case 't': onSemicolon('"'); break;
                 }
               } break;
@@ -324,42 +351,42 @@ namespace xml {
   /** DECLARATION TESTS */
 
   bool Parser::decla_name() {
-    _strptr = &_name;
-    Phase::status = Phase::DECLA_NAME;
-    _pointer->addChild(new Declaration());
-    _pointer = _pointer->children()->prev();
+    _mem.strptr = &_mem.name;
+    _mem.status = Phase::DECLA_NAME;
+    _mem.pointer->addChild(new Declaration());
+    _mem.pointer = _mem.pointer->children()->prev();
     return fillName({{'?', decla_off}}, decla_att_key);
   }
 
   bool Parser::decla_att_key() {
-    _strptr = &_key;
-    Phase::status = Phase::DECLA_ATT_KEY;
-    static_cast<Tag*>(_pointer)->setValue("type", _name);
+    _mem.strptr = &_mem.key;
+    _mem.status = Phase::DECLA_ATT_KEY;
+    static_cast<Tag*>(_mem.pointer)->setValue("type", _mem.name);
     return fillName({{'=', decla_att_val}}, decla_att_key);
   }
 
   bool Parser::decla_att_val() {
-    Phase::status = Phase::DECLA_ATT_VAL;
+    _mem.status = Phase::DECLA_ATT_VAL;
     return fillValue({{'?', decla_off}}, decla_att_key);
   }
 
   bool Parser::decla_off() {
-    Phase::status = Phase::DECLA_OFF;
+    _mem.status = Phase::DECLA_OFF;
     return charMultiline({{'>', decla_set}});
   }
 
   bool Parser::decla_set() {
 
     // multiple or invalid position of declaration
-    if (_pointer->parent() != ROOT) {
+    if (_mem.pointer->parent() != _mem.root) {
       return setError();
     }
 
-    static_cast<Declaration*>(_pointer)->version.parse(
-      static_cast<Tag*>(_pointer)->getValue("version")
+    static_cast<Declaration*>(_mem.pointer)->version.parse(
+      static_cast<Tag*>(_mem.pointer)->getValue("version")
     );
 
-    _pointer->setCompleted();
+    _mem.pointer->setCompleted();
     return setNextTest(any_mark);
   }
 
@@ -368,14 +395,14 @@ namespace xml {
   bool Parser::tag_name() {
     Tag *tag = new Tag();
 
-    if (_pointer->isCompleted()) {      
-      _pointer->connect(tag);
+    if (_mem.pointer->isCompleted()) {      
+      _mem.pointer->connect(tag);
     }
-    else _pointer->addChild(tag);
+    else _mem.pointer->addChild(tag);
 
-    _pointer = tag;
-    _strptr = &_name;
-    Phase::status = Phase::TAG_NAME;
+    _mem.pointer = tag;
+    _mem.strptr = &_mem.name;
+    _mem.status = Phase::TAG_NAME;
 
     return fillName({
       {'>', tag_off},
@@ -384,13 +411,13 @@ namespace xml {
   }
 
   bool Parser::tag_att_key() {
-    _strptr = &_key;
-    Phase::status = Phase::TAG_ATT_KEY;
+    _mem.strptr = &_mem.key;
+    _mem.status = Phase::TAG_ATT_KEY;
     return fillName({{'=', tag_att_val}}, tag_att_key);
   }
 
   bool Parser::tag_att_val() {
-    Phase::status = Phase::TAG_ATT_VAL;
+    _mem.status = Phase::TAG_ATT_VAL;
 
     return fillValue({{
       {'>', tag_off},
@@ -399,44 +426,44 @@ namespace xml {
   }
 
   bool Parser::tag_over() {
-    Phase::status = Phase::TAG_OVER;
-    _pointer->setName(_name);
+    _mem.status = Phase::TAG_OVER;
+    _mem.pointer->setName(_mem.name);
 
     return charMultiline({{'>', []()->bool {
-      _pointer->setCompleted();
+      _mem.pointer->setCompleted();
       return setNextTest(any_mark);
     }}});
   }
 
   bool Parser::tag_off() {
-    Phase::status = Phase::TAG_OFF;
-    _pointer->setName(_name);
+    _mem.status = Phase::TAG_OFF;
+    _mem.pointer->setName(_mem.name);
     return textMultiline({{'<', select_mark}});
   }
 
   /** CLOSE TAG TESTS */
 
   bool Parser::xtag_name() {
-    Phase::status = Phase::XTAG_NAME;
+    _mem.status = Phase::XTAG_NAME;
 
-    if (_pointer->isCompleted()) {
-      _pointer = _pointer->parent();
+    if (_mem.pointer->isCompleted()) {
+      _mem.pointer = _mem.pointer->parent();
     }
 
-    _strptr = &_name;
+    _mem.strptr = &_mem.name;
     return fillName({{'>', xtag_off}}, xtag_noatt_key);
   }
 
   bool Parser::xtag_noatt_key() {
-    Phase::status = Phase::XTAG_NOATT_KEY;
+    _mem.status = Phase::XTAG_NOATT_KEY;
     return setError();
   }
 
   bool Parser::xtag_off() {
-    Phase::status = Phase::XTAG_OFF;
+    _mem.status = Phase::XTAG_OFF;
 
-    if (_pointer->getName() == _name) {
-      _pointer->setCompleted();
+    if (_mem.pointer->getName() == _mem.name) {
+      _mem.pointer->setCompleted();
       return setNextTest(any_mark);
     }
 
@@ -446,48 +473,53 @@ namespace xml {
   /** SELECTION TESTS */
 
   bool Parser::any_mark() {
-    Phase::status = Phase::ANY_MARK;
+    _mem.status = Phase::ANY_MARK;
     return charMultiline({{'<', select_mark}});
   }
 
   bool Parser::select_mark() {
-    Phase::status = Phase::SELECT_MARK;
+    _mem.status = Phase::SELECT_MARK;
 
-    if (_it != _end) {
+    // pattern types selection
+    if (_mem.it != _mem.end) {
       if (isAlphabet()) {
-        Phase::status = Phase::TAG_NAME;
+        _mem.status = Phase::TAG_NAME;
         return setNextTest(tag_name);
       }
-      else if (*_it == '/') {
+      else if (*_mem.it == '/') {
         shiftChar();
-        Phase::status = Phase::XTAG_NAME;
+        _mem.status = Phase::XTAG_NAME;
         return setNextTest(xtag_name);
       }
-      else if (*_it == '!') {
+      else if (*_mem.it == '!') {
         shiftChar();
-        Phase::status = Phase::SELECT_EXCLA;
+        _mem.status = Phase::SELECT_EXCLA;
         return setNextTest(select_excla);
       }
-      else if (*_it == '?') {
+      else if (*_mem.it == '?') {
         shiftChar();
-        Phase::status = Phase::DECLA_MARK;
+        _mem.status = Phase::DECLA_MARK;
         return setNextTest(decla_name);
       }
+    }
+    // parsing completed
+    else if (_mem.pointer->parent() == _mem.root) {
+      return false;
     }
 
     return setError();
   }
 
   bool Parser::select_excla() {
-    if (_it != _end) {
-      if (*_it == '-') {
+    if (_mem.it != _mem.end) {
+      if (*_mem.it == '-') {
         shiftChar();
-        Phase::status = Phase::COMMENT_MARK;
+        _mem.status = Phase::COMMENT_MARK;
         return setNextTest(comment_content);
       }
-      else if (*_it == '[') {
+      else if (*_mem.it == '[') {
         shiftChar();
-        Phase::status = Phase::CDATA_MARK;
+        _mem.status = Phase::CDATA_MARK;
         return setNextTest(cdata_mark);
       }
     }
@@ -498,25 +530,25 @@ namespace xml {
   /** CDATA TESTS */
 
   bool Parser::cdata_mark() {
-    if (_it != _end) {
-      if (*_it == 'C') {
+    if (_mem.it != _mem.end) {
+      if (*_mem.it == 'C') {
         enum alps {_c, _d, _a, _t, a_} phase = _c;
         shiftChar();
 
-        while (_it != _end) {
-          if (phase == _c && *_it == 'D') {
+        while (_mem.it != _mem.end) {
+          if (phase == _c && *_mem.it == 'D') {
             phase = _d;
           }
-          else if (phase == _d && *_it == 'A') {
+          else if (phase == _d && *_mem.it == 'A') {
             phase = _a;
           }
-          else if (phase == _a && *_it == 'T') {
+          else if (phase == _a && *_mem.it == 'T') {
             phase = _t;
           }
-          else if (phase == _t && *_it == 'A') {
+          else if (phase == _t && *_mem.it == 'A') {
             phase = a_;
           }
-          else if (phase == a_ && *_it == '[') {
+          else if (phase == a_ && *_mem.it == '[') {
             shiftChar();
             return setNextTest(cdata_content);
           }
@@ -535,41 +567,47 @@ namespace xml {
     std::string notOffSqr;
     CDATA *cdata = new CDATA();
     std::string cdtext;
-    Phase::status = Phase::CDATA_CONTENT;
+    _mem.status = Phase::CDATA_CONTENT;
 
-    if (_pointer->isCompleted()) {
-      _pointer->connect(cdata);
+    if (_mem.pointer->isCompleted()) {
+      _mem.pointer->connect(cdata);
     }
-    else _pointer->addChild(cdata);
+    else _mem.pointer->addChild(cdata);
 
-    while (_it != _end) {
+    while (_mem.it != _mem.end) {
       if (offSqrCt == 0) {
-        if (*_it == ']') {
+        if (*_mem.it == ']') {
           offSqrCt++;
-          notOffSqr += *_it;
+          notOffSqr += *_mem.it;
         }
-        else cdtext += *_it;
+        else cdtext += *_mem.it;
       }
-      else if (offSqrCt == 1 && *_it == ']') {
+      else if (offSqrCt == 1 && *_mem.it == ']') {
         offSqrCt++;
-        notOffSqr += *_it;
+        notOffSqr += *_mem.it;
       }
-      else if (offSqrCt == 2 && *_it == '>') {
-        Node *oriRoot = ROOT,
-          *oriPtr = _pointer;
+      else if (offSqrCt == 2 && *_mem.it == '>') {
 
-        Parser::scan(cdtext);
+        // go to sub stream
+        Member memOrigin = _mem;
+        Node *cdroot = Parser::build(cdtext);
 
-        if (_errorOccurred) {
+        // 'cdtext' treated as plain text
+        if (_mem.errorOccurred) {
           cdata->setText(cdtext);
-          _errorOccurred = false;
         }
-        else cdata->addChild(ROOT);
+        else { // parsed 'cdtext' added to main stream without '$ROOT'
+          Node *cdsubroot = cdroot->children();
+          cdsubroot->detach();
+          cdata->addChild(cdsubroot);
+        }
 
+        // back to main stream
+        cdroot->destroy();
+        _mem = memOrigin;
+        _mem.pointer->setCompleted();
         shiftChar();
-        ROOT = oriRoot;
-        _pointer = oriPtr;
-        _pointer->setCompleted();
+
         return setNextTest(xtag_name);
       }
       else {
@@ -587,31 +625,31 @@ namespace xml {
   /** COMMENT TEST */
 
   bool Parser::comment_content() {
-    if (_it != _end) {
-      if (*_it == '-') {
+    if (_mem.it != _mem.end) {
+      if (*_mem.it == '-') {
         int offHypCt = 0;
         std::string notOffHyp, comtext;
         Comment *comment = new Comment();
-        Phase::status = Phase::COMMENT_CONTENT;
+        _mem.status = Phase::COMMENT_CONTENT;
 
-        if (_pointer->isCompleted()) {
-          _pointer->connect(comment);
+        if (_mem.pointer->isCompleted()) {
+          _mem.pointer->connect(comment);
         }
-        else _pointer->addChild(comment);
+        else _mem.pointer->addChild(comment);
 
-        while (_it != _end) {
+        while (_mem.it != _mem.end) {
           if (offHypCt == 0) {
-            if (*_it == '-') {
+            if (*_mem.it == '-') {
               offHypCt++;
-              notOffHyp += *_it;
+              notOffHyp += *_mem.it;
             }
-            else comtext += *_it;
+            else comtext += *_mem.it;
           }
-          else if (offHypCt == 1 && *_it == '-') {
+          else if (offHypCt == 1 && *_mem.it == '-') {
             offHypCt++;
-            notOffHyp += *_it;
+            notOffHyp += *_mem.it;
           }
-          else if (offHypCt == 2 && *_it == '>') {
+          else if (offHypCt == 2 && *_mem.it == '>') {
             shiftChar();
             comment->setText(comtext);
             return setNextTest(fill_fext);
@@ -630,54 +668,62 @@ namespace xml {
     return setError();
   }
 
-  /** INIT TEST */
+  /** INITIAL TEST */
 
-  void Parser::scan(mt::CR_STR raw) {
-    // iterators init
-    _it = raw.begin();
-    _end = raw.end();
-    _test[MAIN_TEST] = any_mark;
+  Node *Parser::build(mt::CR_STR raw) {
+    _mem.create(raw);
+    while (_mem.test[MAIN_TEST]()) {}
+    return _mem.root;
+  }
 
-    // nodes init
-    ROOT = new Node("#ROOT");
-    _pointer = ROOT;
+  Node *Parser::join(mt::CR_STR raw) {
+    if (_mem.root) {
+      _mem.refresh(raw);
 
-    // iterator shifting is in scattered calls
-    while (_test[MAIN_TEST]()) {}
+      // iterator shifting is in scattered calls
+      while (_mem.test[MAIN_TEST]()) {}
+
+      // expected to return the parsed additional relative root
+      if (_mem.errorOccurred) {
+        return _mem.root;
+      }
+
+      return _mem.root->children()->prev();
+    }
+
+    return build(raw);
   }
 
   std::string Parser::getStatusMessage() {
     std::string represent;
 
     // whitespace character representation
-    if (*_it == '\0') represent = "\\0";
-    else if (*_it == ' ') represent = "\\s";
-    else if (*_it == '\n') represent = "\\n";
-    else if (*_it == '\r') represent = "\\r";
-    else if (*_it == '\t') represent = "\\t";
-    else if (*_it == '\f') represent = "\\f";
-    else if (*_it == '\v') represent = "\\v";
-    else represent = *_it;
+    if (*_mem.it == '\0') represent = "\\0";
+    else if (*_mem.it == ' ') represent = "\\s";
+    else if (*_mem.it == '\n') represent = "\\n";
+    else if (*_mem.it == '\r') represent = "\\r";
+    else if (*_mem.it == '\t') represent = "\\t";
+    else if (*_mem.it == '\f') represent = "\\f";
+    else if (*_mem.it == '\v') represent = "\\v";
+    else represent = *_mem.it;
 
-    std::string openerName = "...", closerName = "...";
+    // latest created node name to display
+    std::string createdName = "...";
 
-    // opener name on display
-    if (_pointer) {
-      if (_pointer->getName().empty()) openerName = "#EMPTY";
-      else openerName = _pointer->getName();
+    if (_mem.pointer && !_mem.pointer->getName().empty()) {
+      createdName = _mem.pointer->getName();
     }
 
-    // closer name on display
-    if (_name.empty()) closerName = "#EMPTY";
-    else closerName = _name;
+    // on testing node name to display
+    std::string ongoingName = _mem.name.empty() ? "..." : _mem.name;
 
     return ( // no title
-      std::string("char  : ") + represent + '\n' +
-      "row   : " + std::to_string(_point[ROW]) + '\n' +
-      "col   : " + std::to_string(_point[COL]) + '\n' +
-      "phase : " + Phase::labels[Phase::status] + '\n' +
-      "opener: " + openerName + '\n' +
-      "closer: " + closerName + '\n'
+      std::string("char   : ") + represent + '\n' +
+      "row    : " + std::to_string(_mem.point[ROW]) + '\n' +
+      "col    : " + std::to_string(_mem.point[COL]) + '\n' +
+      "phase  : " + Phase::labels[_mem.status] + '\n' +
+      "created: " + createdName + '\n' +
+      "ongoing: " + ongoingName + '\n'
     );
   }
 }}

@@ -10,17 +10,65 @@ namespace xml {
   private:
     typedef std::function<bool()> TEST_CALLBACK;
     typedef mt::PAIR2<char, TEST_CALLBACK> CHCB;
-    inline static std::string::const_iterator _it, _end;
-    inline static Node *_pointer = nullptr;
 
     enum { MAIN_TEST, STOPBY_TEST };
     enum { ROW, COL };
 
-    inline static TEST_CALLBACK _test[] {nullptr, nullptr};
-    inline static size_t _point[] {1, 1};
-    inline static std::string _name, _key, _text;
-    inline static std::string *_strptr;
-    inline static bool _errorOccurred = false;
+    struct Phase {
+      enum CODE {
+        // free text
+        ZERO, FILL_TEXT,
+        // declaration
+        DECLA_MARK, DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
+        // tag
+        TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OVER, TAG_OFF,
+        // xtag
+        XTAG_NAME, XTAG_NOATT_KEY, XTAG_OFF,
+        // free mark
+        ANY_MARK, SELECT_MARK, SELECT_EXCLA,
+        // cdata
+        CDATA_MARK, CDATA_CONTENT,
+        // commnet
+        COMMENT_MARK, COMMENT_CONTENT
+      };
+
+      inline static constexpr std::string labels[21] {
+        "ZERO", "FILL_TEXT",
+        // declaration
+        "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF",
+        // tag
+        "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OFF", "TAG_OVER",
+        // xtag
+        "XTAG_NAME", "XTAG_NOATT_KEY", "XTAG_OFF",
+        // mark
+        "ANY_MARK", "SELECT_MARK", "SELECT_EXCLA",
+        // cdata
+        "CDATA_MARK", "CDATA_CONTENT",
+        // commnet
+        "COMMENT_MARK", "COMMENT_CONTENT"
+      };
+    };
+
+    // available for multiple versions
+    struct Member {
+      std::string::const_iterator it, end;
+      std::string name, key, text;
+      std::string *strptr = nullptr;
+
+      size_t point[2] {1, 1};
+      bool errorOccurred = false;
+
+      Node *root = nullptr, *pointer = nullptr;
+      TEST_CALLBACK test[2] {nullptr, nullptr};
+      Phase::CODE status = Phase::ZERO;
+
+      Member() {}
+      void init(mt::CR_STR raw);
+      void create(mt::CR_STR raw);
+      void refresh(mt::CR_STR raw);
+    };
+
+    inline static Member _mem {};
 
     static mt::ARR_BOL<256> createForbiddenNameCharTable();
     static mt::ARR_BOL<256> createWhitespaceCharTable();
@@ -72,50 +120,17 @@ namespace xml {
     static bool cdata_content();
     static bool comment_content();
 
-    struct Phase {
-      enum CODE {
-        // free text
-        ZERO, FILL_TEXT,
-        // declaration
-        DECLA_MARK, DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
-        // tag
-        TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OVER, TAG_OFF,
-        // xtag
-        XTAG_NAME, XTAG_NOATT_KEY, XTAG_OFF,
-        // free mark
-        ANY_MARK, SELECT_MARK, SELECT_EXCLA,
-        // cdata
-        CDATA_MARK, CDATA_CONTENT,
-        // commnet
-        COMMENT_MARK, COMMENT_CONTENT
-      };
-
-      inline static constexpr std::string labels[] {
-        "ZERO", "FILL_TEXT",
-        // declaration
-        "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF",
-        // tag
-        "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OFF", "TAG_OVER",
-        // xtag
-        "XTAG_NAME", "XTAG_NOATT_KEY", "XTAG_OFF",
-        // mark
-        "ANY_MARK", "SELECT_MARK", "SELECT_EXCLA",
-        // cdata
-        "CDATA_MARK", "CDATA_CONTENT",
-        // commnet
-        "COMMENT_MARK", "COMMENT_CONTENT"
-      };
-
-      inline static CODE status = ZERO;
-    };
-
   public:
-    inline static Node *ROOT = nullptr;
     Parser() = delete;
+    static Node *build(mt::CR_STR raw);
+    static Node *join(mt::CR_STR raw);
 
-    static void scan(mt::CR_STR raw);
+    /**
+     * Undetected pattern (root has no children)
+     * or invalid pattern is considered error.
+     */
     static std::string getStatusMessage();
-    static bool isError() { return _errorOccurred; }
+    static bool isError() { return _mem.errorOccurred; }
   };
 }}
 
