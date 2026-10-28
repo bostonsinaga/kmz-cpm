@@ -8,8 +8,8 @@ namespace xml {
 
   class Node {
   public:
-    enum COMPASS { NORTH, EAST, SOUTH, WEST };
-    enum DIRECTION { LEFT = 3, RIGHT = 1 };
+    enum COMPASS { NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3 };
+    enum DIRECTION { LEFT = WEST, RIGHT = EAST };
 
     typedef std::function<bool(Node*)> CALLBACK;
 
@@ -17,6 +17,7 @@ namespace xml {
     size_t depth = 0;
     bool completed = false;
     Node *quad[4] { nullptr, nullptr, nullptr, nullptr };
+    void redepths();
 
   protected:
     std::string name, text;
@@ -51,8 +52,12 @@ namespace xml {
     /** SETTERS */
 
     void connect(Node *node);
+    void connectList(Node *list);
+    void insert(Node *node);
+    void insertList(Node *list);
     void setParent(Node *node);
     void addChild(Node *node);
+    void addChildren(Node *list);
     void cleanChildren();
 
     virtual void setName(mt::CR_STR newName) {
@@ -81,6 +86,7 @@ namespace xml {
     /** REMOVALS */
 
     void detach();
+    void release();
     void destroy();
     void annihilate(mt::CR<DIRECTION> direction = LEFT);
   };

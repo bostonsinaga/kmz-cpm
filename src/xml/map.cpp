@@ -83,8 +83,8 @@ namespace xml {
   size_t Map::total() {
     size_t ct = 0;
 
-    for (const auto& [key, node] : mapset) {
-      ct += node.size();
+    for (const auto& [key, val] : mapset) {
+      ct += val.size();
     }
 
     return ct;

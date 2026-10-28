@@ -396,7 +396,7 @@ namespace xml {
     Tag *tag = new Tag();
 
     if (_mem.pointer->isCompleted()) {      
-      _mem.pointer->connect(tag);
+      _mem.pointer->insert(tag);
     }
     else _mem.pointer->addChild(tag);
 
@@ -570,7 +570,7 @@ namespace xml {
     _mem.status = Phase::CDATA_CONTENT;
 
     if (_mem.pointer->isCompleted()) {
-      _mem.pointer->connect(cdata);
+      _mem.pointer->insert(cdata);
     }
     else _mem.pointer->addChild(cdata);
 
@@ -633,7 +633,7 @@ namespace xml {
         _mem.status = Phase::COMMENT_CONTENT;
 
         if (_mem.pointer->isCompleted()) {
-          _mem.pointer->connect(comment);
+          _mem.pointer->insert(comment);
         }
         else _mem.pointer->addChild(comment);
 

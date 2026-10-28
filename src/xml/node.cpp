@@ -25,14 +25,17 @@ namespace xml {
     return ostr + cstr;
   }
 
-  void Node::init() {
+  void Node::redepths() {
     if (children()) {
       children()->traverse(RIGHT, [&](Node *current)->bool {
         current->depth -= depth;
         return true;
       });
     }
+  }
 
+  void Node::init() {
+    redepths();
     depth = 0;
     quad[WEST] = this;
     quad[EAST] = this;
@@ -40,17 +43,54 @@ namespace xml {
 
   void Node::connect(Node *node) {
     if (node) {
-      Node *tail = node->quad[WEST];
+      node->quad[NORTH] = parent();
+      node->depth = depth;
       node->quad[WEST] = prev();
-      tail->quad[EAST] = this;
       prev()->quad[EAST] = node;
-      quad[WEST] = tail;
+      quad[WEST] = node;
+      node->quad[EAST] = this;
+    }
+  }
 
-      node->forEach(RIGHT, [&](Node *current)->bool {
-        current->quad[NORTH] = quad[NORTH];
+  void Node::connectList(Node *list) {
+    if (list) {
+      list->forEach(RIGHT, [&](Node *current)->bool {
+        current->quad[NORTH] = parent();
         current->depth = depth;
         return true;
       });
+
+      Node *tail = list->prev();
+      list->quad[WEST] = prev();
+      prev()->quad[EAST] = list;
+      quad[WEST] = tail;
+      tail->quad[EAST] = this;
+    }
+  }
+
+  void Node::insert(Node *node) {
+    if (node) {
+      node->quad[NORTH] = parent();
+      node->depth = depth;
+      node->quad[EAST] = next();
+      next()->quad[WEST] = node;
+      node->quad[WEST] = this;
+      quad[EAST] = node;
+    }
+  }
+
+  void Node::insertList(Node *list) {
+    if (list) {
+      list->forEach(RIGHT, [&](Node *current)->bool {
+        current->quad[NORTH] = parent();
+        current->depth = depth;
+        return true;
+      });
+
+      list->prev()->quad[EAST] = next();
+      next()->quad[WEST] = list->prev();
+      list->quad[WEST] = this;
+      quad[EAST] = list;
     }
   }
 
@@ -63,8 +103,19 @@ namespace xml {
       if (children()) children()->connect(node);
       else {
         quad[SOUTH] = node;
+        node->quad[NORTH] = this;
+        node->depth = depth + 1;
+      }
+    }
+  }
 
-        node->forEach(RIGHT, [&](Node *current)->bool {
+  void Node::addChildren(Node *list) {
+    if (list) {
+      if (children()) children()->connectList(list);
+      else {
+        quad[SOUTH] = list;
+
+        list->forEach(RIGHT, [&](Node *current)->bool {
           current->quad[NORTH] = this;
           current->depth = depth + 1;
           return true;
@@ -163,6 +214,16 @@ namespace xml {
     init();
   }
 
+  void Node::release() {
+    if (parent()) parent()->quad[SOUTH] = nullptr;
+
+    forEach(RIGHT, [](Node *current)->bool {
+      current->quad[NORTH] = nullptr;
+      current->redepths();
+      return true;
+    });
+  }
+
   void Node::destroy() {
     if (children()) {
       children()->traverse(
@@ -177,8 +238,8 @@ namespace xml {
   }
 
   void Node::annihilate(mt::CR<DIRECTION> direction) {
-    quad[direction]->forEach(direction, [](Node *node)->bool {
-      node->destroy();
+    quad[direction]->forEach(direction, [](Node *current)->bool {
+      current->destroy();
       return true;
     });
   }
