@@ -51,13 +51,6 @@ namespace xml {
     status = Phase::ZERO;
   }
 
-  void Parser::Member::create(mt::CR_STR raw) {
-    init(raw);
-    root = new Node("$ROOT");
-    root->setCompleted();
-    pointer = root;
-  }
-
   void Parser::Member::refresh(mt::CR_STR raw) {
     init(raw);
     pointer = root->children() ? root->children()->prev() : root;
@@ -111,6 +104,7 @@ namespace xml {
     if (_mem.pointer && _mem.pointer->isCompleted() &&
       _mem.pointer->parent() == _mem.root
     ) {
+      _mem.root->setCompleted();
       return false;
     }
 
@@ -395,7 +389,7 @@ namespace xml {
   bool Parser::tag_name() {
     Tag *tag = new Tag();
 
-    if (_mem.pointer->isCompleted()) {      
+    if (_mem.pointer->isCompleted()) {
       _mem.pointer->insert(tag);
     }
     else _mem.pointer->addChild(tag);
@@ -483,27 +477,24 @@ namespace xml {
     // pattern types selection
     if (_mem.it != _mem.end) {
       if (isAlphabet()) {
-        _mem.status = Phase::TAG_NAME;
         return setNextTest(tag_name);
       }
       else if (*_mem.it == '/') {
         shiftChar();
-        _mem.status = Phase::XTAG_NAME;
         return setNextTest(xtag_name);
       }
       else if (*_mem.it == '!') {
         shiftChar();
-        _mem.status = Phase::SELECT_EXCLA;
         return setNextTest(select_excla);
       }
       else if (*_mem.it == '?') {
         shiftChar();
-        _mem.status = Phase::DECLA_MARK;
         return setNextTest(decla_name);
       }
     }
     // parsing completed
     else if (_mem.pointer->parent() == _mem.root) {
+      _mem.root->setCompleted();
       return false;
     }
 
@@ -511,6 +502,8 @@ namespace xml {
   }
 
   bool Parser::select_excla() {
+    _mem.status = Phase::SELECT_EXCLA;
+
     if (_mem.it != _mem.end) {
       if (*_mem.it == '-') {
         shiftChar();
@@ -582,38 +575,46 @@ namespace xml {
         }
         else cdtext += *_mem.it;
       }
-      else if (offSqrCt == 1 && *_mem.it == ']') {
-        offSqrCt++;
-        notOffSqr += *_mem.it;
-      }
-      else if (offSqrCt == 2 && *_mem.it == '>') {
-
-        // go to sub stream
-        Member memOrigin = _mem;
-        Node *cdroot = Parser::build(cdtext);
-
-        // 'cdtext' treated as plain text
-        if (_mem.errorOccurred) {
-          cdata->setText(cdtext);
+      else if (offSqrCt == 1) {
+        if (*_mem.it == ']') {
+          offSqrCt++;
+          notOffSqr += *_mem.it;
         }
-        else { // parsed 'cdtext' added to main stream without '$ROOT'
-          Node *cdsubroot = cdroot->children();
-          cdsubroot->detach();
-          cdata->addChild(cdsubroot);
+        else { // repeat again
+          cdtext += notOffSqr;
+          notOffSqr = "";
+          offSqrCt = 0;
         }
-
-        // back to main stream
-        cdroot->destroy();
-        _mem = memOrigin;
-        _mem.pointer->setCompleted();
-        shiftChar();
-
-        return setNextTest(xtag_name);
       }
-      else {
-        cdtext += notOffSqr;
-        notOffSqr = "";
-        offSqrCt = 0;
+      else if (offSqrCt == 2) {
+        if (*_mem.it == '>') {
+          // go to sub stream
+          Member memOrigin = _mem;
+          Node *cdroot = Parser::build(cdtext);
+
+          // 'cdtext' treated as plain text
+          if (_mem.errorOccurred) {
+            cdata->setText(cdtext);
+          }
+          else { // parsed 'cdtext' added to main stream without '$ROOT'
+            Node *cdsubroot = cdroot->children();
+            cdsubroot->detach();
+            cdata->addChild(cdsubroot);
+          }
+
+          // back to main stream
+          cdroot->annihilate();
+          _mem = memOrigin;
+          cdata->setCompleted();
+          shiftChar();
+
+          return setNextTest(any_mark);
+        }
+        else { // repeat again
+          cdtext += notOffSqr;
+          notOffSqr = "";
+          offSqrCt = 0;
+        }
       }
 
       shiftChar();
@@ -671,16 +672,19 @@ namespace xml {
   /** INITIAL TEST */
 
   Node *Parser::build(mt::CR_STR raw) {
-    _mem.create(raw);
+    _mem.init(raw);
+    _mem.root = new Node("$ROOT");
+    _mem.pointer = _mem.root;
+
+    // iterator shifting is in scattered calls
     while (_mem.test[MAIN_TEST]()) {}
+
     return _mem.root;
   }
 
   Node *Parser::join(mt::CR_STR raw) {
     if (_mem.root) {
       _mem.refresh(raw);
-
-      // iterator shifting is in scattered calls
       while (_mem.test[MAIN_TEST]()) {}
 
       // expected to return the parsed additional relative root

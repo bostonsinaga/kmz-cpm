@@ -19,7 +19,7 @@ namespace xml {
         // free text
         ZERO, FILL_TEXT,
         // declaration
-        DECLA_MARK, DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
+        DECLA_NAME, DECLA_ATT_KEY, DECLA_ATT_VAL, DECLA_OFF,
         // tag
         TAG_NAME, TAG_ATT_KEY, TAG_ATT_VAL, TAG_OVER, TAG_OFF,
         // xtag
@@ -33,14 +33,15 @@ namespace xml {
       };
 
       inline static constexpr std::string labels[21] {
+        // free text
         "ZERO", "FILL_TEXT",
         // declaration
         "DECLA_NAME", "DECLA_ATT_KEY", "DECLA_ATT_VAL", "DECLA_OFF",
         // tag
-        "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OFF", "TAG_OVER",
+        "TAG_NAME", "TAG_ATT_KEY", "TAG_ATT_VAL", "TAG_OVER", "TAG_OFF",
         // xtag
         "XTAG_NAME", "XTAG_NOATT_KEY", "XTAG_OFF",
-        // mark
+        // free mark
         "ANY_MARK", "SELECT_MARK", "SELECT_EXCLA",
         // cdata
         "CDATA_MARK", "CDATA_CONTENT",
@@ -64,7 +65,6 @@ namespace xml {
 
       Member() {}
       void init(mt::CR_STR raw);
-      void create(mt::CR_STR raw);
       void refresh(mt::CR_STR raw);
     };
 
