@@ -36,10 +36,10 @@ int main(int argc, char *argv[]) {
           return true;
         });
 
-        root->destroy();
+        displayXMLErrorMessage();
+        root->annihilate();
       }
 
-      displayXMLErrorMessage();
       std::cout << "NUMBER OF NODES: " << num << std::endl;
       return cm::COMMAND_CALLBACK_DONE;
     }
