@@ -154,37 +154,41 @@ namespace xml {
   ) {
     if (!callback) return;
 
-    bool stopped = false;
+    bool continued = false;
     std::stack<mt::PAIR<Node*>> loaded;
     loaded.push({this, this});
 
     while (!loaded.empty()) {
+      // go to children
       if (loaded.top().second->children()) {
         loaded.push({
           loaded.top().second->children(),
           loaded.top().second->children()
         });
       }
+      // at leaf
       else {
-        if (!callback(loaded.top().second)) break;
-        loaded.top().second = loaded.top().second->quad[direction];
+        // call callback up to root
+        while (!loaded.empty() && callback(loaded.top().second)) {
 
-        while (loaded.top().first == loaded.top().second) {
-          loaded.pop();
+          // shift to neighbor
+          loaded.top().second = loaded.top().second->quad[direction];
 
-          if (loaded.empty()) break;
-          else {
-            if (!callback(loaded.top().second)) {
-              stopped = true;
-              break;
-            }
-
-            loaded.top().second = loaded.top().second->quad[direction];
+          // back to start position
+          if (loaded.top().second == loaded.top().first) {
+            loaded.pop();
+          }
+          else { // go to neighbor
+            continued = true;
+            break;
           }
         }
-      }
 
-      if (stopped) break;
+        // go to neighbor
+        if (continued) continued = false;
+        // callback error or the 'loaded' is already empty
+        else break;
+      }
     }
   }
 
@@ -224,24 +228,24 @@ namespace xml {
     });
   }
 
-  void Node::destroy() {
-    if (children()) {
-      children()->traverse(
-        RIGHT, [](Node *current)->bool {
-          delete current;
-          return true;
-        }
-      );
-    }
+  void Node::annihilate(mt::CR<DIRECTION> direction) {
+    mt::VEC<Node*> deletions;
 
-    delete this;
+    traverse(
+      direction, [&](Node *current)->bool {
+        deletions.push_back(current);
+        return true;
+      }
+    );
+
+    for (Node *current : deletions) {
+      delete current;
+    }
   }
 
-  void Node::annihilate(mt::CR<DIRECTION> direction) {
-    quad[direction]->forEach(direction, [](Node *current)->bool {
-      current->destroy();
-      return true;
-    });
+  void Node::destroy() {
+    detach();
+    annihilate();
   }
 }}
 

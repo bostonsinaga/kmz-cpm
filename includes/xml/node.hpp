@@ -87,8 +87,8 @@ namespace xml {
 
     void detach();
     void release();
+    void annihilate(mt::CR<DIRECTION> direction = RIGHT);
     void destroy();
-    void annihilate(mt::CR<DIRECTION> direction = LEFT);
   };
 }}
 
